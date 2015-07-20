@@ -1,0 +1,388 @@
+@extends('layout.master')
+@section('stylehead')
+	<!-- Datepicker -->
+	{{HTML::style('public/plugins/bootstrap-datetimepicker/bootstrap-datepicker.min.css')}}
+	<!-- Datatable-->
+	{{HTML::style('public/plugins/datatables/css/jquery.dataTables.css')}}
+	<!-- Parsley -->
+    {{HTML::style("public/plugins/parsley/parsley.css")}}
+    <!-- cus hoangec style -->
+    {{HTML::style("public/css/adminlte/cushoangec.css")}}
+@stop
+@section('content')
+<div class="content-wrapper">
+	<!-- Content Header (Page header) -->
+	<section class="content-header">
+	  <h1>
+	    Quản lý báo cáo chăn nuôi bò thịt
+	    <small>Bảng điều khiển</small>
+	  </h1>
+	  <ol class="breadcrumb">
+	    <li><a href="#"><i class="fa fa-dashboard"></i>Quản trị</a></li>
+	    <li class="active">Báo cáo ngành</li>
+	  </ol>
+	</section>
+	<!-- Main content -->
+	<section class="content">
+		<div class="row">
+			@if(Session::has('error'))
+			<!-- Message Feedback -->
+			<div class="col-md-12">
+				<div class="callout callout-danger">
+	              <h4>Lỗi</h4>
+	              <p>{{Session::get('error')}}.</p>
+	            </div>
+            </div>
+			@elseif(Session::has('success'))
+			<!-- Message Feedback -->
+			<div class="col-md-12">
+				<div class="callout callout-success">
+	              <h4>{{Session::get('success')}}</h4>
+	              <p>{{Session::get('success')}}.</p>
+	            </div>
+	         </div>
+			@endif
+	
+			<div class="col-md-12">
+				<!-- Add new cow import box -->
+				<div class="box box-primary" >
+					<div class="box-header with-border">
+						<h3 class="box-title">Chức năng</h3>										
+						<br />
+						<div class="box-application" style="margin-top:10px">
+						 	<a class="btn btn-app" href="javascript:void(0)" onclick="showBoxFunc('box-add-func')">
+	                    		<i class="fa fa-edit"></i> Thêm mới
+	                 		 </a>
+							<a class="btn btn-app">
+	                    		<i class="fa fa-edit"></i> Nhập từ file excel
+	                 		</a>
+						</div><!-- ./box-application -->
+					</div><!--./box-header -->	
+					<!--box-outer add function -->
+					<div class="box-outer" id="box-add-func" style="display:none">
+						<!--Form start -->					
+						{{Form::open(array('route'=>array('admin_report_import_quantity_add_post'),'data-parsley-validate'))}}	
+						<div class="box-body">											
+							<div class="row">
+								<div class="form-group">	
+									<div class="col-md-6" >
+										{{Form::label('lblFarms','Nông trường')}}
+										{{Form::select('selected_farm',$farms,'1',array('class'=>'form-control'))}}
+									</div>								
+								</div><!--./form-group -->
+							</div>
+							<hr />
+							<div class="row">
+								<div class="col-md-3">
+									<div class="form-group">								
+										{{Form::label('lblBatch','Tên lô')}}
+										{{Form::text('batch_name','',array('class'=>'form-control','required'=>'true'))}}					
+									</div><!--./form-group -->
+								</div>
+								<div class="col-md-3" >
+									<div class="form-group">								
+											{{Form::label('lblImporter','Tên nhà nhập khẩu')}}
+											{{Form::select('import_partner',$partners,'1',array('class'=>'form-control'))}}													
+									</div><!--./form-group -->
+								</div>
+								<div class="col-md-3">
+									<div class="form-group">
+										{{Form::label('lbldate','Ngày nhập')}}
+										<div class="input-group">
+											<div class ="input-group-addon">
+												<i class="fa fa-calendar"></i>
+											</div>	
+											{{Form::text('import_date','',array('class'=>'form-control','data-provide'=> 'datepicker','required'=>'true'))}}
+										</div><!--./input-group -->			
+									</div><!--./form-group -->
+								</div>
+							</div><!--./end-rows -->
+							<hr />
+							<div class="row">
+								<div class="col-md-3">
+									<div class="form-group">
+										{{Form::label('lblmalebeef','Số lượng bò đực thịt')}}
+										{{Form::text('feedersteer_quantity','0',array('class'=>'form-control','data-parsley-required'=>'true','data-parsley-type'=>'digits'))}}
+									</div><!--./form-group -->
+								</div>
+								<div class="col-md-3">
+									<div class="form-group">
+										{{Form::label('lblfemalebeef','Số lượng bò cái thịt')}}
+										{{Form::text('feederheifer_quantity','0',array('class'=>'form-control','data-parsley-required'=>'true','data-parsley-type'=>'digits'))}}
+									</div><!--./form-group -->
+								</div>
+								<div class="col-md-3">
+									<div class="form-group">
+										{{Form::label('lblsteer','Số lượng bò đực giống')}}
+										{{Form::text('breederbull_quantity','0',array('class'=>'form-control','data-parsley-required'=>'true','data-parsley-type'=>'digits'))}}
+									</div><!--./form-group -->
+								</div>
+								<div class="col-md-3">
+									<div class="form-group">
+											{{Form::label('lblheifer','Số lượng bò cái giống')}}
+											{{Form::text('breederheifer_quantity','0',array('class'=>'form-control','required'=>'true','data-parsley-type'=>'digits'))}}
+									</div><!--./form-group -->	
+								</div>
+							</div><!--./end-rows -->
+							<div class="row">
+								<div class="col-md-3">
+									<div class="form-group">
+										{{Form::label('lblmalebeef','Trọng lượng bò đực thịt')}}
+										{{Form::text('feedersteer_quantity','0',array('class'=>'form-control','data-parsley-required'=>'true','data-parsley-type'=>'digits'))}}
+									</div><!--./form-group -->
+								</div>
+								<div class="col-md-3">
+									<div class="form-group">
+										{{Form::label('lblfemalebeef','Trọng lượng bò cái thịt')}}
+										{{Form::text('feederheifer_quantity','0',array('class'=>'form-control','data-parsley-required'=>'true','data-parsley-type'=>'digits'))}}
+									</div><!--./form-group -->
+								</div>
+								<div class="col-md-3">
+									<div class="form-group">
+										{{Form::label('lblsteer','Trọng lượng bò đực giống')}}
+										{{Form::text('breederbull_quantity','0',array('class'=>'form-control','data-parsley-required'=>'true','data-parsley-type'=>'digits'))}}
+									</div><!--./form-group -->
+								</div>
+								<div class="col-md-3">
+									<div class="form-group">
+											{{Form::label('lblheifer','Trọng lượng bò cái giống')}}
+											{{Form::text('breederheifer_quantity','0',array('class'=>'form-control','required'=>'true','data-parsley-type'=>'digits'))}}
+									</div><!--./form-group -->	
+								</div>								
+							</div><!--./end-rows -->
+							<div class="row">
+								<div class="col-md-3">
+									<div class="form-group">
+										{{Form::label('lblmalebeef','Đơn giá bò đực thịt')}}
+										{{Form::text('feedersteer_quantity','0',array('class'=>'form-control','data-parsley-required'=>'true','data-parsley-type'=>'digits'))}}
+									</div><!--./form-group -->
+								</div>
+								<div class="col-md-3">
+									<div class="form-group">
+										{{Form::label('lblfemalebeef','Đơn giá bò cái thịt')}}
+										{{Form::text('feederheifer_quantity','0',array('class'=>'form-control','data-parsley-required'=>'true','data-parsley-type'=>'digits'))}}
+									</div><!--./form-group -->
+								</div>
+								<div class="col-md-3">
+									<div class="form-group">
+										{{Form::label('lblsteer','Đơn giá bò đực giống')}}
+										{{Form::text('breederbull_quantity','0',array('class'=>'form-control','data-parsley-required'=>'true','data-parsley-type'=>'digits'))}}
+									</div><!--./form-group -->
+								</div>
+								<div class="col-md-3">
+									<div class="form-group">
+											{{Form::label('lblheifer','Đơn giá bò cái giống')}}
+											{{Form::text('breederheifer_quantity','0',array('class'=>'form-control','required'=>'true','data-parsley-type'=>'digits'))}}
+									</div><!--./form-group -->	
+								</div>								
+							</div><!--./end-rows -->
+						</div><!--./box-body -->
+						<div class="box-footer">
+							{{Form::submit('Xác nhận',array('class'=>'btn btn-primary'))}}
+							{{Form::close()}}
+						</div>
+					</div><!-- ./outer-box -->				
+				</div>
+			</div>
+			<div class="col-md-12">
+				<!-- list cow import box -->
+				<div class="box" >
+					<div class="box-header">
+						<h3 class="box-title">Danh sách các lô bò nhập</h3>										
+					</div><!--./box-header -->
+					<div class="box-body table-responsive">			
+						<table id="import_table" class="display" cellspacing="0" width="100%">
+							<thead>
+								<tr >
+			                        <th>#</th>
+			                        <th>Nông Trường</th>
+			                        <th>Lô</th>
+			                        <th>Nhập khẩu</th>
+			                        <th>Ngày nhập</th>
+			                        <th>Bò đực vỗ béo</th>
+			                        <th>Bò cái vỗ béo</th>
+			                        <th>Bò đực giống</th>
+			                        <th>Bò cái giống</th>
+			                        <th>Cập nhập</th>
+			                        <th>Xóa</th>
+		                      </tr>
+							</thead>
+							<tbody>
+								@foreach($importTable as $item)
+									<tr id="{{'rows_'.$item->id}}">
+										<td>{{$item->id}}</td>
+										<td>{{Farm::find($item->farmID)->name}}</td>
+										<td>{{$item->batch_name}}</td>
+										<td>{{$item->import_partner}}</td>
+										<td>{{date('m/d/Y',strtotime($item->import_date))}}</td>
+										<td>{{$item->feedersteer}}</td>
+										<td>{{$item->feederheifer}}</td>
+										<td>{{$item->breederbull}}</td>
+										<td>{{$item->breederheifer}}</td>											
+										<td style="text-align:center" class="details-control"></td>
+										<td style="text-align:center" class="delete-control"><a href="javascript:void(0)"><i class="fa fa-times"></i></a></td>
+									</tr>
+								@endforeach
+							</tbody>
+						</table>
+					</div><!--./box-body -->
+				</div><!--./box -->
+			</div>
+		</div>
+
+	</section>
+</div>
+@stop
+@section('data_code')
+	<!-- parsley -->
+    {{HTML::script("public/plugins/parsley/parsley.min.js")}}
+    <!-- Ngon ngu viet cho parsley-->
+    {{HTML::script("public/plugins/parsley/i18n/vi.js")}}
+<script type="text/javascript">
+	$('document').ready(function(){
+		var table = $('#import_table').DataTable({			
+          "language" : {
+          	"lengthMenu" : "Hiển thị _MENU_ dòng trên một trang",
+          	"zeroRecords": "Không tìm thấy giá trị",
+          	"search" : "Tìm kiếm",
+          	"info" : "Trang thứ _PAGE_ của _PAGES_ trang",
+          	"infoEmpty": "Không có dữ liệu",
+          	"paginate": {
+		        "first":      "Đầu tiên",
+		        "last":       "Cuối cùng",
+		        "next":       "Sau",
+		        "previous":   "Trước"
+		    },
+          }
+        });
+        $('#import_table tbody').on('click','td.details-control',function(){
+        	var tr = $(this).closest('tr');
+        	var row = table.row(tr);        	     	      
+        	if(row.child.isShown()){
+        		row.child.hide();
+		        tr.removeClass('shown');
+        	}else{
+        		row.child(format(row.data())).show();
+        		$('#update_form').parsley();
+		        tr.addClass('shown');
+        	}
+        })
+        $('#import_table tbody').on('click','td.delete-control',function(){
+        	var tr = $(this).closest('tr');
+        	var row = table.row(tr);        	
+        	$.get("{{URL::to("dashboard/admin/reports/beef/importquantity/delete")}}/"+ row.data()[0],function(data){
+        		if(data = true){
+        			row.remove().draw();	
+        			alert("Đã xóa thành công");
+        		}				
+			}).fail(function(data){
+				console.log(data.responseText);
+			});        	
+        })
+
+	});
+	function deleteImport(id){
+		$.get("{{URL::to("dashboard/admin/reports/beef/importquantity/delete")}}/"+id,function(data){			
+			console.log("#rows_"+id);
+			$("#rows_"+id).remove();			
+		}).fail(function(data){
+			console.log(data.responseText);
+		});
+	}
+	function format(data){
+		var farmsJson = {{json_encode($farms)}};
+		var str = '';
+		str = '{{Form::open(array("route"=>array("admin_report_import_quantity_update_post"),"id"=>"update_form"))}}'+
+		'<div class="row">' + 
+			'<div class="form-group">'+
+				'<div class="col-xs-6 col-md-6" >'+
+					'{{Form::label("lblFarms","Nông trường")}}' +
+					'<select name="selected_farm" class="form-control">';
+					$.each(farmsJson,function(key,value){
+						if(value == data[1]){
+							str += '<option   value="' + key + '"selected>' + value + '</option>';
+						}else{
+							str += '<option value="' + key + '" >' + value + '</option>';
+						}
+						
+					});
+				str += '</select>' + 
+				'</div>' + 
+			'</div>' + 
+		'</div>' +
+		'<hr />' + 
+		'<div class="row">' + 
+			'<div class="col-xs-4 col-md-4">'+
+				'<div class="form-group">' + 
+					'<label>Tên lô </label>'+ 
+					'<input type="hidden" name="batch_id" value="' + data[0] + '"></input>'+
+					'<input type="text" name="batch_name" value="' + data[2] + '" class= "form-control" required></input>' + 
+				'</div>' + 
+			'</div>' +
+			'<div class="col-xs-4 col-md-4" >' + 
+				'<div class="form-group">' + 
+					'{{Form::label("lblImporter","Tên nhà nhập khẩu")}} ' + 
+					'<input type="text" name="import_partner" value="' + data[3] + '" class="form-control" required></input>' + 
+				'</div>'+
+			'</div>'+
+			'<div class="col-xs-4 col-md-4">'+
+				'<div class="form-group">'+
+					'{{Form::label("lbldate","Ngày nhập")}} '+
+					'<div class="input-group">'+
+						'<div class ="input-group-addon">'+
+							'<i class="fa fa-calendar"></i>'+
+						'</div>'+
+						'<input type="text" name="import_date" class="form-control" data-provide = "datepicker" value ="'+ data[4]+'" required></input>' +	
+					'</div>' +
+				'</div>'+
+			'</div>'+
+		'</div>' +
+		'<hr />' + 
+		'<div class="row">'+
+			'<div class="col-xs-3 col-md-3">'+
+				'<div class="form-group">'+
+					'{{Form::label("lblmalebeef","Số lượng bò đực vỗ béo")}}' +
+					'<input type="hidden" name="feedersteer_quantity_hide" value="' + data[5] + '"></input>' + 
+					'<input type="text" name="feedersteer_quantity"value="' + data[5] + '"class="form-control" required data-parsley-type="digits"	min="1"></input>' + 					
+				'</div>'+
+			'</div>'+
+			'<div class="col-xs-3 col-md-3">' + 
+				'<div class="form-group">'+
+					'{{Form::label("lblfemalebeef","Số lượng bò cái vỗ béo")}}'+
+					'<input type="hidden" name="feederheifer_quantity_hide" value="' + data[6] + '"></input>' + 
+					'<input type="text" name="feederheifer_quantity" value="' + data[6] + '"class="form-control" required data-parsley-type="digits"	min="1"></input>' + 
+				'</div>'+
+			'</div>'+
+			'<div class=" col-xs-3 col-md-3">'+
+				'<div class="form-group">'+
+					'{{Form::label("lblsteer","Số lượng bò đực giống")}}'+
+					'<input type="hidden" name="breederbull_quantity_hide" value="' + data[7] + '"></input>' + 
+					'<input type="text" name= "breederbull_quantity" value="' + data[7] + '" class="form-control" required data-parsley-type="digits"	min="1"></input>' + 
+				'</div>'+
+			'</div>'+
+			'<div class="col-xs-3 col-md-3">'+
+				'<div class="form-group">'+
+					'{{Form::label("lblheifer","Số lượng bò cái giống")}}'+
+					'<input type="hidden" name="breederheifer_quantity_hide" value="' + data[8] + '"></input>' + 
+					'<input type="text" name="breederheifer_quantity" value="' + data[8] + '"class="form-control" required data-parsley-type="digits"	min="1"></input>' + 
+				'</div>'+
+			'</div>'+
+		'</div>'+
+		'<hr />' +
+		'{{Form::submit("Xác nhận",array("class"=>"btn btn-primary"))}}' +
+		'{{Form::close()}}';
+
+		return str;
+	}
+	// Ham hien thi box function tung chuc nang
+	function showBoxFunc(boxFuncId){
+		$idBoxFunc = $("#"+ boxFuncId);
+		if($idBoxFunc.is(":hidden")){
+			$idBoxFunc.fadeIn("fast");
+		}else{
+			$idBoxFunc.fadeOut("fast");
+		}
+	}
+
+</script>
+@stop

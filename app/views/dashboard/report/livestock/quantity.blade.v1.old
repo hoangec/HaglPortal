@@ -1,0 +1,352 @@
+@extends('layout.master')
+@section('stylehead')
+	<!-- Datepicker -->
+	{{HTML::style('public/plugins/bootstrap-datetimepicker/bootstrap-datepicker.min.css')}}
+	<!-- Datatable-->
+	{{HTML::style('public/plugins/datatables/css/dataTables.bootstrap.css')}}
+	<!-- Parsley -->
+    {{HTML::style("public/plugins/parsley/parsley.css")}}
+    <!-- cus hoangec style -->
+    {{HTML::style("public/css/adminlte/cushoangec.css")}}
+@stop
+@section('content')
+<div class="content-wrapper">
+	<!-- Content Header (Page header) -->
+	<section class="content-header">
+	  <h1>
+	    Quản lý báo cáo chăn nuôi bò thịt
+	    <small>Bảng điều khiển</small>
+	  </h1>
+	  <ol class="breadcrumb">
+	    <li><a href="#"><i class="fa fa-dashboard"></i>Quản trị</a></li>
+	    <li class="active">Báo cáo ngành</li>
+	  </ol>
+	</section>
+	<!-- Main content -->
+	<section class="content">
+		<div class="row">
+			
+			
+			@if(Session::has('error'))
+			<!-- Message Feedback -->
+			<div class="col-md-12">
+				<div class="callout callout-danger">
+	              <h4>Lỗi</h4>
+	              <p>{{Session::get('error')}}.</p>
+	            </div>
+            </div>
+			@elseif(Session::has('success'))
+			<!-- Message Feedback -->
+			<div class="col-md-12">
+				<div class="callout callout-success">
+	              <h4>{{Session::get('success')}}</h4>
+	              <p>{{Session::get('success')}}.</p>
+	            </div>
+	         </div>
+			@endif	
+			<div class="col-md-12">
+				<!-- list cow import box -->
+				<div class="box" >
+					<div class="box-header">
+						<h3 class="box-title">Số lượng bò thực tế</h3>										
+					</div><!--./box-header -->
+					<div class="box-body table-responsive">			
+						<table id="real-quantity-table" class="table table-bordered table-striped table-hover">
+							<thead>
+								<tr >			                        
+			                        <th>Quốc gia</th>	
+			                        <th>Tổng</th>	                        
+			                        <th>Bò đực vỗ béo</th>
+			                        <th>Bò cái vỗ béo</th>
+			                        <th>Bò đực giống</th>
+			                        <th>Bò cái giống</th>
+			                        <th>Ngày cập nhật</th>			                        
+		                      </tr>
+							</thead>
+							<tbody>
+								@foreach($data as $country)
+								<tr id = "{{$country['id']}}">
+									<td>{{$country['name']}}</td>
+									<td><b style="font-size:20px; color:red">{{$country['sumQty']}}</b></td>
+									<td>{{$country['feederSteerQty']}}</td>
+									<td>{{$country['feederHieferQty']}}</td>
+									<td>{{$country['breederBullQty']}}</td>
+									<td>{{$country['breederHieferQty']}}</td>
+									<td>--</td>
+								</tr>
+								@endforeach
+							</tbody>
+						</table>
+					</div><!--./box-body -->
+				</div><!--./box -->
+			</div>
+			<div class = col-md-12>
+				<!-- AREA CHART 1-->
+	            <div class="box box-primary">
+	                <div class="box-header">
+	                  <h3 class="box-title">Biểu đồ so sánh tỷ lệ tổng đàn bò thực tế giữa các quốc gia</h3>
+	                </div>
+	                <div class="box-body chart-responsive">
+	                  <div class="chart" id="pie-total" style="height:300px;"></div>
+	                </div><!-- /.box-body -->
+	            </div><!-- /.box -->
+			</div>
+			<div class = col-md-12>
+				<!-- AREA CHART 1-->
+	            <div class="box box-primary">
+	                <div class="box-header">
+	                  <h3 class="box-title">Biểu đồ so sánh tỷ lệ tổng đàn bò thực tế giữa các quốc gia</h3>
+	                </div>
+	                <div class="box-body chart-responsive">
+	                  <div class="chart" id="column-real-country" style="height:300px;"></div>
+	                </div><!-- /.box-body -->
+	            </div><!-- /.box -->
+			</div>
+			<!-- col.Chart left-->			
+			<div class="col-md-6">
+				<!-- AREA CHART 1-->
+	            <div class="box box-info">
+	                <div class="box-header">
+	                  <h3 class="box-title">Biểu đồ so sánh tỷ lệ bò đực vỗ béo giữa các quốc gia</h3>
+	                </div>
+	                <div class="box-body chart-responsive">
+	                  <div class="chart" id="pie-feeder-Steer" style="height: 300px;"></div>
+	                </div><!-- /.box-body -->
+	            </div><!-- /.box -->
+	            <!-- AREA CHART 3 -->
+	            <div class="box box-info">
+	                <div class="box-header">
+	                  <h3 class="box-title">Biểu đồ so sánh tỷ lệ bò đực giống giữa các quốc gia</h3>
+	                </div>
+	                <div class="box-body chart-responsive">
+	                  <div class="chart" id="pie-breeder-bull" style="height: 300px;"></div>
+	                </div><!-- /.box-body -->
+	            </div><!-- /.box -->	      
+			</div><!--./  col.chart left -->
+			<!-- col.Chart right-->
+			<div class="col-md-6">
+				 <!-- DONUT CHART 2-->
+	            <div class="box box-info">
+	                <div class="box-header">
+	                  <h3 class="box-title">Biểu đồ so sánh tỷ lệ bó cái vỗ béo giữa các quốc gia</h3>
+	                </div>
+	                <div class="box-body chart-responsive">
+	                  <div class="chart" id="pie-feeder-hiefer" style="height: 300px; position: relative;"></div>
+	                </div><!-- /.box-body -->
+	            </div><!-- /.box -->
+	            <!-- AREA CHART 4-->
+	            <div class="box box-info">
+	                <div class="box-header">
+	                  <h3 class="box-title">Biểu đồ so sánh tỷ lệ bò cái giống giữa các quốc gia</h3>
+	                </div>
+	                <div class="box-body chart-responsive">
+	                  <div class="chart" id="pie-breeder-hiefer" style="height: 300px;"></div>
+	                </div><!-- /.box-body -->
+	            </div><!-- /.box -->
+			</div><!--./ col.chart right -->
+		</div>
+
+	</section>
+</div>
+@stop
+@section('data_code')
+	<!-- parsley -->
+    {{HTML::script("public/plugins/parsley/parsley.min.js")}}
+    <!-- Ngon ngu viet cho parsley-->
+    {{HTML::script("public/plugins/parsley/i18n/vi.js")}}
+    <!--Load script google chart -->
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+	<script type="text/javascript">
+		// Script cho datatable
+	
+		$("document").ready(function(){
+			var myTable = $('#real-quantity-table');
+			myTable.dataTable({
+	          "bPaginate": false,
+	          "bLengthChange": true,
+	          "bFilter": false,
+	          "bSort": false,
+	          "bInfo": false,
+	          "bAutoWidth": true
+	        });
+	        $('#real-quantity-table tbody tr').on("click",function(event){
+	        	id = this.id;
+	        	url = "{{URL::route('front_report_beef_quantity_get')}}";
+	        	url += "/" + id;
+	        	console.log(url);
+     			$(location).attr("href", url);
+	        });
+		})
+		// script cho cac bieu do dung google chart
+		google.load("visualization", "1", {packages:["corechart"]});
+		google.setOnLoadCallback(totalChart);
+
+		google.load("visualization", "1", {packages:["corechart","bar"]});
+		google.setOnLoadCallback(detailCountryColumnChart);
+		
+		/*google.load("visualization", "1", {packages:["corechart"]});
+		google.setOnLoadCallback(feederSteerChart);
+		google.load("visualization", "1", {packages:["corechart"]});
+		google.setOnLoadCallback(feederHieferChart);
+		google.load("visualization", "1", {packages:["corechart"]});
+		google.setOnLoadCallback(breederBullChart);
+		google.load("visualization", "1", {packages:["corechart"]});
+		google.setOnLoadCallback(BreederHieferChart);*/
+		//
+		$(window).resize(function () {
+    		totalChart();
+    /*		feederSteerChart();
+    		feederHieferChart();
+    		breederBullChart();
+    		BreederHieferChart();*/
+		});
+
+		function totalChart() {
+    		var options = {
+	        	width: '100%',
+	      		height: '100%',
+	            pieSliceText: 'percentage',	        
+	            chartArea: {
+		            left: "3%",
+		            top: "3%",
+		            height: "94%",
+		            width: "94%"
+	        	}
+    		};
+    		var jsonData = $.ajax({
+    			url : "{{URL::route('report_real_quantity_ajax_get')}}",
+    			data: {"type":"total"}, 
+    			dataType:"json",
+    			async: false
+    		}).responseText;    		
+		    var data = new google.visualization.DataTable(jsonData);   			
+   			var chart = new google.visualization.PieChart(document.getElementById('pie-total'));
+    		chart.draw(data, options);
+		}
+		function detailCountryColumnChart(){
+			var options = {
+					isStacked : true,
+					width: '100%',
+					height: '100%',
+					legend: {position: 'top', maxLines: 3},
+					hAxis : {
+						title: 'Nông trường',
+						format : 'long',
+						viewWindowMode : 'pretty',
+						viewWindow: {
+				            min: [7, 30, 0],
+				            max: [17, 30, 0]
+				        }
+					},
+					vAxis: {
+	          			title: 'Số lượng thực tế'
+	        		}
+			};
+			var countries = {{json_encode($data)}}
+			var data = new google.visualization.DataTable();
+			data.addColumn('string',"Quốc gia");
+			data.addColumn('number',"Bò thịt đực");
+			data.addColumn('number',"Bò thịt cái");
+			data.addColumn('number',"Bò giống đực");
+			data.addColumn('number',"Bò giống cái");
+			$.each(countries,function(key,country){
+				data.addRows([
+					[country.name,country.feederSteerQty,country.feederHieferQty,country.breederBullQty,country.breederHieferQty],
+				]);
+			});
+			var chart = new google.visualization.ColumnChart(document.getElementById('column-real-country'));
+			chart.draw(data, options);
+			//console.log(countries);
+		}
+
+		function feederSteerChart(){
+			var options = {
+	        	width: '100%',
+	      		height: '100%',
+	            pieSliceText: 'percentage',	        
+	            chartArea: {
+		            left: "3%",
+		            top: "3%",
+		            height: "94%",
+		            width: "94%"
+	        	}
+    		};
+    		var jsonData = $.ajax({
+    			url : "{{URL::route('report_real_quantity_ajax_get')}}",
+    			data: {"type":"feeder_steer"}, 
+    			dataType:"json",
+    			async: false
+    		}).responseText;    	
+		    var data = new google.visualization.DataTable(jsonData);
+   			var chart = new google.visualization.PieChart(document.getElementById('pie-feeder-Steer'));
+    		chart.draw(data, options);
+		}
+		function feederHieferChart(){
+			var options = {
+	        	width: '100%',
+	      		height: '100%',
+	            pieSliceText: 'percentage',	        
+	            chartArea: {
+		            left: "3%",
+		            top: "3%",
+		            height: "94%",
+		            width: "94%"
+	        	}
+    		};
+    		var jsonData = $.ajax({
+    			url : "{{URL::route('report_real_quantity_ajax_get')}}",
+    			data: {"type":"feeder_hiefer"}, 
+    			dataType:"json",
+    			async: false
+    		}).responseText;    		
+		    var data = new google.visualization.DataTable(jsonData);
+   			var chart = new google.visualization.PieChart(document.getElementById('pie-feeder-hiefer'));
+    		chart.draw(data, options);
+		}
+		function breederBullChart(){
+			var options = {
+	        	width: '100%',
+	      		height: '100%',
+	            pieSliceText: 'percentage',	        
+	            chartArea: {
+		            left: "3%",
+		            top: "3%",
+		            height: "94%",
+		            width: "94%"
+	        	}
+    		};
+    		var jsonData = $.ajax({
+    			url : "{{URL::route('report_real_quantity_ajax_get')}}",
+    			data: {"type":"breeder_bull"}, 
+    			dataType:"json",
+    			async: false
+    		}).responseText;
+    	
+		    var data = new google.visualization.DataTable(jsonData);
+   			var chart = new google.visualization.PieChart(document.getElementById('pie-breeder-bull'));
+    		chart.draw(data, options);
+		}
+		function BreederHieferChart(){
+			var options = {
+	        	width: '100%',
+	      		height: '100%',
+	            pieSliceText: 'percentage',	        
+	            chartArea: {
+		            left: "3%",
+		            top: "3%",
+		            height: "94%",
+		            width: "94%"
+	        	}
+    		};
+    		var jsonData = $.ajax({
+    			url : "{{URL::route('report_real_quantity_ajax_get')}}",
+    			data: {"type":"breeder_heifer"}, 
+    			dataType:"json",
+    			async: false
+    		}).responseText;
+		    var data = new google.visualization.DataTable(jsonData);
+   			var chart = new google.visualization.PieChart(document.getElementById('pie-breeder-hiefer'));
+    		chart.draw(data, options);
+		}
+	</script>
+@stop

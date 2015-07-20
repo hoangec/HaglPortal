@@ -1,0 +1,147 @@
+<?php namespace Controllers\Domain\Dashboard\Report;
+use \National as National;
+use \Company as Company;
+use \Farm as Farm;
+class BeefController extends \BaseController{
+	public function getIndex(){
+		return \View::make('dashboard.report.beefbreeding.index')->with('title',"Báo cáo chăn nuôi bò thịt");
+	}
+	public function getQuantity($country = null){
+		if($country != null){
+			$data = $this->getQuantityByCountry($country);			
+			/*echo "<pre>";
+			print_r($data);
+			echo "</pre>";*/
+			return \View::make('dashboard.report.beefbreeding.quantitybycountry')
+						->with('title',"Báo cáo số lượng bò thực tế")
+						->with('data',$data);		
+		}else{
+			$countries = National::all();
+			$data = array();
+			foreach ($countries as $country) {
+				$realQty = json_decode($country->real_quantity,true);	
+				//	
+				$feederSteer = $realQty['qtyMaleBeef'];	
+				$feederHiefer = $realQty['qtyFemaleBeef'];
+				$breederBull =  $realQty['qtySteer'];
+				$breederHiefer = $realQty['qtyHeifer'];		
+				//
+				$data[$country->id]['id'] = $country->id;
+				$data[$country->id]['name'] = $country->name;
+				$data[$country->id]['sumQty'] = $feederSteer + $feederHiefer + $breederBull + $breederHiefer;
+				$data[$country->id]['feederSteerQty'] = $feederSteer;
+				$data[$country->id]['feederHieferQty'] = $feederHiefer;
+				$data[$country->id]['breederBullQty'] = $breederBull;
+				$data[$country->id]['breederHieferQty'] = $breederHiefer;
+			}
+			return \View::make('dashboard.report.beefbreeding.quantity')
+						->with('title',"Báo cáo số lượng bò thực tế")
+						->with('data',$data);
+		}
+		
+	}
+	Public function getRealQuantityByCompany(){
+		$id = \Input::get('companyID');
+		$farmsByCompany = array();
+		$farmsByCompany = Farm::where('companyID',$id)->get()->toArray();
+		foreach($farmsByCompany as $key => $farm){
+			$qtyConverted = array()	;
+			$qtyConverted = $this->quantityJson2Array($farm['real_quantity']);
+			$farmsByCompany[$key]['real_quantity'] = $qtyConverted;
+		}
+		return json_encode($farmsByCompany);
+	}
+	private function getQuantityByCountry($country){
+		$countryName = National::find($country);	
+		$companies = Company::where("nationalID",$country)->get();
+		$farmsByCompany = array();
+		$comapnyData = array();
+		foreach ($companies as $company) {
+			$realQty = json_decode($company->real_quantity,true);
+			$feederSteer = $realQty['qtyMaleBeef'];	
+			$feederHiefer = $realQty['qtyFemaleBeef'];
+			$breederBull =  $realQty['qtySteer'];
+			$breederHiefer = $realQty['qtyHeifer'];		
+			$comapnyData[$company->id]['id'] = $company->id;
+			$comapnyData[$company->id]['name'] = $company->name;
+			$comapnyData[$company->id]['sumQty'] = $feederSteer + $feederHiefer + $breederBull + $breederHiefer;
+			$comapnyData[$company->id]['feederSteerQty'] = $feederSteer;
+			$comapnyData[$company->id]['feederHieferQty'] = $feederHiefer;
+			$comapnyData[$company->id]['breederBullQty'] = $breederBull;
+			$comapnyData[$company->id]['breederHieferQty'] = $breederHiefer;
+			$farmsByCompany[$company->id] = Farm::where('companyID',$company->id)->get()->toArray();
+		}
+		$data = array();
+		$data['country']['name'] = $countryName->name;
+		$data['country']['id'] = $countryName->id;
+		$data['companies'] = $comapnyData;		
+		
+		foreach($farmsByCompany as $key1 => $farms){
+			$qtyConverted = array()	;
+			foreach($farms as $key2 => $farm){
+				$qtyConverted = $this->quantityJson2Array($farm['real_quantity']);
+				$farmsByCompany[$key1][$key2]['real_quantity'] = $qtyConverted;
+			}
+		}
+		$data['farms'] = $farmsByCompany;
+		return $data;		
+	}
+	private function quantityJson2Array($qtyJson){
+		$result = array();
+		$farmRealQty = json_decode($qtyJson,true);
+		$feederSteer = $farmRealQty['qtyMaleBeef'];	
+		$feederHiefer = $farmRealQty['qtyFemaleBeef'];
+		$breederBull =  $farmRealQty['qtySteer'];
+		$breederHiefer = $farmRealQty['qtyHeifer'];
+		$result['sumQty'] = $feederSteer + $feederHiefer + $breederBull + $breederHiefer;
+		$result['feederSteerQty'] = $feederSteer;
+		$result['feederHieferQty'] = $feederHiefer;
+		$result['breederBullQty'] = $breederBull;
+		$result['breederHieferQty'] = $breederHiefer;
+		return $result;
+	}
+	public function getRealQuantity(){
+			$type = \Input::get("type");
+			$countries = National::all();
+			$data = array();
+			$data["cols"] = array(array("type"=>"string"),array("type"=>"number"));
+			foreach($countries as $country){
+				$realQty = json_decode($country->real_quantity,true);	
+				$feederSteer = $realQty['qtyMaleBeef'];	
+				$feederHiefer = $realQty['qtyFemaleBeef'];
+				$breederBull =  $realQty['qtySteer'];
+				$breederHiefer = $realQty['qtyHeifer'];
+				$sumQty = $feederSteer + $feederHiefer + $breederBull + $breederHiefer;
+				
+				if($type == "total"){				
+					$data["rows"][] = array("c"=>array(array("v"=>$country->name),array("v"=>$sumQty)));
+				}elseif($type == "feeder_steer"){
+					$data["rows"][] = array("c"=>array(array("v"=>$country->name),array("v"=>$feederSteer)));
+				}elseif($type == "feeder_hiefer"){
+					$data["rows"][] = array("c"=>array(array("v"=>$country->name),array("v"=>$feederHiefer)));
+				}elseif($type == "breeder_bull"){
+					$data["rows"][] = array("c"=>array(array("v"=>$country->name),array("v"=>$breederBull)));
+				}elseif($type == "breeder_heifer"){
+					$data["rows"][] = array("c"=>array(array("v"=>$country->name),array("v"=>$breederHiefer)));
+				}
+			}
+			return json_encode($data);
+	}
+
+	public function getCompaniesRealQuantityByCountry(){
+		$id = \Input::get('companyID');		
+		$data = array();
+		$data["cols"] = array(array("label"=>"companyName","type"=>"string"),array("label"=>"Bò thịt đực","type"=>"number"),array("label"=>"Bò thịt cái","type"=>"number"),array("label"=>"Bò giống đực","type"=>"number"),array("label"=>"Bò giống cái","type"=>"number"));
+		$companies = Company::where('nationalID',$id)->get();
+		foreach($companies as $company){
+			$realQty = json_decode($company->real_quantity,true);	
+			$feederSteer = $realQty['qtyMaleBeef'];	
+			$feederHiefer = $realQty['qtyFemaleBeef'];
+			$breederBull =  $realQty['qtySteer'];
+			$breederHiefer = $realQty['qtyHeifer'];
+			$sumQty = $feederSteer + $feederHiefer + $breederBull + $breederHiefer;
+			$data["rows"][] = array("c"=>array(array("v"=>$company->name),array("v"=>$feederSteer,"f"=>number_format($feederSteer,0,',','.')),array("v"=>$feederHiefer,"f"=>number_format($feederHiefer,0,',','.')),array("v"=>$breederBull,"f"=>number_format($breederBull,0,',','.')),array("v"=>$breederHiefer,"f"=>number_format($breederHiefer,0,',','.'))));
+		}
+		return json_encode($data);
+	}
+}

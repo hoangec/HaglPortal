@@ -1,0 +1,25 @@
+.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+  background-color: #ffff99;
+}
+.table-hover tbody tr:hover > td {
+  cursor: pointer
+}
+
+td.details-control {
+    background: url('../../img/details_open.png') no-repeat center center;
+    cursor: pointer;
+}
+tr.shown td.details-control {
+    background: url('../../img/details_close.png') no-repeat center center;
+}
+
+tr.contract-diff-real{
+	color: red;
+}
+
+td.total-column{
+	font-weight: bold;
+	font-size: 17px;
+	color:red;
+}
+

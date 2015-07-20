@@ -1,0 +1,305 @@
+<?php namespace Controllers\Domain\Dashboard\Report;
+use \National as National;
+use \Company as Company;
+use \Farm as Farm;
+use Location as Location;
+class BeefController extends \BaseController{
+	// Xu ly hien thi bang dieu khien bao cao
+	public function getIndex(){
+		$realQtyCountries = $this->getRealQuantityCountries();
+		$importQtyCountries = $this->getImportQuantityCountries();
+		$exportQtyCountries = $this->getExportQuantityCountries();
+		$deathQtyCountries = $this->getDeathQuantityCountries();
+		$data = array();
+		$totalRealQty = 0;
+		$totalImpQty = 0;
+		$totalExpQty = 0;
+		$totalDeathQty = 0;
+		foreach($realQtyCountries as $country){
+			$totalRealQty += $country['sumQty'] ;
+		}
+		foreach($importQtyCountries as $country){
+			$totalImpQty += $country['sumQty'];
+		}
+		foreach($exportQtyCountries as $country){
+			$totalExpQty += $country['sumQty'];
+		}
+		foreach ($deathQtyCountries as $country) {
+			$totalDeathQty += $country['sumQty'];
+		}
+		$data['totalRealQtyCountries'] = $totalRealQty;
+		$data['totalImportQtyCountries'] = $totalImpQty;
+		$data['totalExportQtyCountries'] = $totalExpQty;
+		$data['totalDeathQtyCountries'] = $totalDeathQty;
+		/*echo "<pre>";
+		print_r($realQtyContries);
+		echo "<pre>";*/
+		return \View::make('dashboard.report.beefbreeding.index')
+					->with('title',"Báo cáo chăn nuôi bò thịt")
+					->with('data',$data);
+	}
+
+	public function getRealQuantity($country = null){
+		if($country != null){
+			$data = $this->getRealQuantityByCountry($country);
+			/*echo "<pre>";
+			print_r($data);
+			echo "</pre>";	*/		
+			return \View::make('dashboard.report.beefbreeding.realquantitybycountry')
+						->with('title',"Báo cáo số lượng bò thực tế")
+						->with('data',$data);		
+			
+		}else{
+			// Truong hop khong co tham so hien thi tat ca cac quoc gia
+			$data = array();
+			$data = $this->getRealQuantityCountries();
+		/*	echo "<pre>";
+			print_r($data);
+			echo "</pre>";*/
+			return \View::make('dashboard.report.beefbreeding.realquantity')
+						->with('title',"Báo cáo số lượng bò thực tế")
+						->with('data',$data);
+		}	
+	}
+
+	public function getImportQuantity($country = null){
+		if($country != null){
+			$data = $this->getImportQuantityByCountry($country);
+			return \View::make('dashboard.report.beefbreeding.importquantitybycountry')
+						->with('title',"Báo cáo số lượng bò nhập")
+						->with('data',$data);
+		}else{
+			$data = array();
+			$data = $this->getImportQuantityCountries();
+			return \View::make('dashboard.report.beefbreeding.importquantity')
+						 ->with('title',"Báo cáo số lượng bò nhập")
+						 ->with('data',$data);
+		}
+	}
+	
+	public function getExportQuantity($country = null){
+		if($country != null){
+			$data = $this->getExportQuantityByCountry($country);
+			return \View::make('dashboard.report.beefbreeding.exportquantitybycountry')
+						->with('title',"Báo cáo số lượng bò xuất bán")
+						->with('data',$data);
+		}else{
+			$data = array();
+			$data = $this->getExportQuantityCountries();
+			return \View::make('dashboard.report.beefbreeding.exportquantity')
+						 ->with('title',"Báo cáo số lượng bò xuất bán")
+						 ->with('data',$data);
+		}
+	}
+
+	public function getDeathQuantity($country = null){
+		if($country != null){
+			$data = $this->getDeathQuantityByCountry($country);
+			return \View::make('dashboard.report.beefbreeding.deathquantitybycountry')
+						->with('title',"Báo cáo số lượng bò chết")
+						->with('data',$data);
+		}else{
+			$data = array();
+			$data = $this->getDeathQuantityCountries();
+			return \View::make('dashboard.report.beefbreeding.deathquantity')
+						 ->with('title',"Báo cáo số lượng bò chết")
+						 ->with('data',$data);
+		}
+	}
+	//Lay so luong bo thuc te cua tat ca cac quoc gia
+	private function getRealQuantityCountries(){
+		$result = array();
+		$countries = National::all();
+		foreach ($countries as $country) {
+			$realQty = $this->quantityJson2Array($country->real_quantity);	
+			$result[$country->id] = $realQty;
+			$result[$country->id]['id'] = $country['id'];
+			$result[$country->id]['name'] = $country['name'];
+			$result[$country->id]['updated_at'] = $country['updated_at'];
+		}
+
+		return $result;
+	}
+	
+	private function getRealQuantityByCountry($countryID){
+		$country = National::find($countryID);	
+		$companies = Company::where("nationalID",$countryID)->get();
+		$farmsByCompany = array();
+		$companyData = array();
+		foreach ($companies as $company) {
+			$realQty = $this->quantityJson2Array($company->real_quantity);
+			$companyData[$company->id] = $realQty;
+			$companyData[$company->id]['id'] = $company->id;
+			$companyData[$company->id]['name'] = $company->name;
+			$companyData[$company->id]['updated_at'] = $company->updated_at;
+			// Data cua farms lien quan den company
+			$farmsByCompany[$company->id] = Farm::where('companyID',$company->id)->get()->toArray();
+		}
+		$data = array();
+		$data['country']['name'] = $country->name;
+		$data['country']['id'] = $country->id;
+		$data['companies'] = $companyData;		
+		// Thuc hien dinh dang lai cot real_quantity cua farm thanh mang
+		foreach($farmsByCompany as $key1 => $farms){
+			$qtyConverted = array()	;
+			foreach($farms as $key2 => $farm){
+				$qtyConverted = $this->quantityJson2Array($farm['real_quantity']);
+				$farmsByCompany[$key1][$key2]['real_quantity'] = $qtyConverted;
+			}
+		}
+		$data['farms'] = $farmsByCompany;
+		//
+		$locations = Location::where('nationalID',$countryID)->get();
+		$lcoationData = array();
+		foreach($locations as $key => $location){
+			$realQty = $this->quantityJson2Array($location->real_quantity);
+			$lcoationData[$location->id] = $realQty;
+			$lcoationData[$location->id]['name'] = $location->name;
+			$lcoationData[$location->id]['updated_at'] = $location->updated_at;
+		}
+		$data['locations'] = $lcoationData;
+		return $data;		
+	}
+
+	private function getImportQuantityCountries(){
+		$result = array();
+		$countries = National::all();
+		foreach($countries as $country){
+			$realQty = $this->quantityJson2Array($country->import_quantity);	
+			$result[$country->id] = $realQty;
+			$result[$country->id]['id'] = $country['id'];
+			$result[$country->id]['name'] = $country['name'];
+			$result[$country->id]['updated_at'] = $country['updated_at'];
+		}
+		return $result;
+	}
+
+	private function getImportQuantityByCountry($country){
+		$countryName = National::find($country);	
+		$companies = Company::where("nationalID",$country)->get();
+		$farmsByCompany = array();
+		$companyData = array();
+		foreach ($companies as $company) {
+			$realQty = $this->quantityJson2Array($company->import_quantity);
+			$companyData[$company->id] = $realQty;
+			$companyData[$company->id]['id'] = $company->id;
+			$companyData[$company->id]['name'] = $company->name;
+			$companyData[$company->id]['updated_at'] = $company->updated_at;
+			// Data cua farms lien quan den company
+			$farmsByCompany[$company->id] = Farm::where('companyID',$company->id)->get()->toArray();
+		}
+		$data = array();
+		$data['country']['name'] = $countryName->name;
+		$data['country']['id'] = $countryName->id;
+		$data['companies'] = $companyData;		
+		// Thuc hien dinh dang lai cot real_quantity cua farm thanh mang
+		foreach($farmsByCompany as $key1 => $farms){
+			$qtyConverted = array()	;
+			foreach($farms as $key2 => $farm){
+				$qtyConverted = $this->quantityJson2Array($farm['import_quantity']);
+				$farmsByCompany[$key1][$key2]['import_quantity'] = $qtyConverted;
+			}
+		}
+		$data['farms'] = $farmsByCompany;
+		return $data;		
+	}
+
+	private function getExportQuantityCountries(){
+		$result = array();
+		$countries = National::all();
+		foreach($countries as $country){
+			$realQty = $this->quantityJson2Array($country->export_quantity);	
+			$result[$country->id] = $realQty;
+			$result[$country->id]['id'] = $country['id'];
+			$result[$country->id]['name'] = $country['name'];
+			$result[$country->id]['updated_at'] = $country['updated_at'];
+		}
+		return $result;
+	}
+	private function getExportQuantitybyCountry($country){
+		$countryName = National::find($country);	
+		$companies = Company::where("nationalID",$country)->get();
+		$farmsByCompany = array();
+		$companyData = array();
+		foreach ($companies as $company) {
+			$realQty = $this->quantityJson2Array($company->export_quantity);
+			$companyData[$company->id] = $realQty;
+			$companyData[$company->id]['id'] = $company->id;
+			$companyData[$company->id]['name'] = $company->name;
+			$companyData[$company->id]['updated_at'] = $company->updated_at;
+			// Data cua farms lien quan den company
+			$farmsByCompany[$company->id] = Farm::where('companyID',$company->id)->get()->toArray();
+		}
+		$data = array();
+		$data['country']['name'] = $countryName->name;
+		$data['country']['id'] = $countryName->id;
+		$data['companies'] = $companyData;		
+		// Thuc hien dinh dang lai cot real_quantity cua farm thanh mang
+		foreach($farmsByCompany as $key1 => $farms){
+			$qtyConverted = array()	;
+			foreach($farms as $key2 => $farm){
+				$qtyConverted = $this->quantityJson2Array($farm['export_quantity']);
+				$farmsByCompany[$key1][$key2]['export_quantity'] = $qtyConverted;
+			}
+		}
+		$data['farms'] = $farmsByCompany;
+		return $data;		
+	}
+
+	private function getDeathQuantityCountries(){
+		$result = array();
+		$countries = National::all();
+		foreach($countries as $country){
+			$realQty = $this->quantityJson2Array($country->death_quantity);	
+			$result[$country->id] = $realQty;
+			$result[$country->id]['id'] = $country['id'];
+			$result[$country->id]['name'] = $country['name'];
+			$result[$country->id]['updated_at'] = $country['updated_at'];
+		}
+		return $result;
+	}
+	private function getDeathQuantityByCountry($country){
+		$countryName = National::find($country);	
+		$companies = Company::where("nationalID",$country)->get();
+		$farmsByCompany = array();
+		$companyData = array();
+		foreach ($companies as $company) {
+			$realQty = $this->quantityJson2Array($company->export_quantity);
+			$companyData[$company->id] = $realQty;
+			$companyData[$company->id]['id'] = $company->id;
+			$companyData[$company->id]['name'] = $company->name;
+			$companyData[$company->id]['updated_at'] = $company->updated_at;
+			// Data cua farms lien quan den company
+			$farmsByCompany[$company->id] = Farm::where('companyID',$company->id)->get()->toArray();
+		}
+		$data = array();
+		$data['country']['name'] = $countryName->name;
+		$data['country']['id'] = $countryName->id;
+		$data['companies'] = $companyData;		
+		// Thuc hien dinh dang lai cot real_quantity cua farm thanh mang
+		foreach($farmsByCompany as $key1 => $farms){
+			$qtyConverted = array()	;
+			foreach($farms as $key2 => $farm){
+				$qtyConverted = $this->quantityJson2Array($farm['death_quantity']);
+				$farmsByCompany[$key1][$key2]['death_quantity'] = $qtyConverted;
+			}
+		}
+		$data['farms'] = $farmsByCompany;
+		return $data;		
+	}
+	private function quantityJson2Array($qtyJson){
+		$result = array();
+		$farmRealQty = json_decode($qtyJson,true);
+		$feederSteer = $farmRealQty['feedersteer'];	
+		$feederheifer = $farmRealQty['feederheifer'];
+		$breederBull =  $farmRealQty['breederbull'];
+		$breederheifer = $farmRealQty['breederheifer'];
+		$result['sumQty'] = $feederSteer + $feederheifer + $breederBull + $breederheifer;
+		$result['feederSteerQty'] = $feederSteer;
+		$result['feederheiferQty'] = $feederheifer;
+		$result['breederBullQty'] = $breederBull;
+		$result['breederheiferQty'] = $breederheifer;
+		return $result;
+	}
+
+}

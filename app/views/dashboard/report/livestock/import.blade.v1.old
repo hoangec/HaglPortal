@@ -1,0 +1,413 @@
+@extends('layout.master')
+@section('stylehead')
+	<!-- Datepicker -->
+	{{HTML::style('public/plugins/bootstrap-datetimepicker/bootstrap-datepicker.min.css')}}
+	<!-- Datatable-->
+	{{HTML::style('public/plugins/datatables/css/dataTables.bootstrap.css')}}
+	<!-- Parsley -->
+    {{HTML::style("public/plugins/parsley/parsley.css")}}
+    <!-- cus hoangec style -->
+    {{HTML::style("public/css/adminlte/cushoangec.css")}}
+@stop
+@section('content')
+<div class="content-wrapper">
+	<!-- Content Header (Page header) -->
+	<section class="content-header">
+	  <h1>
+	    Báo cáo tổng đàn bò thịt nhập theo đối tác
+	  </h1>
+	  <ol class="breadcrumb">
+	    <li><a href="#"><i class="fa fa-dashboard"></i>Home</a></li>
+	    <li><a href="#">Báo cáo ngành</a></li>
+	    <li><a href="{{URL::route('front_report_livestock_index_get')}}">Chăn nuôi bò thịt</a></li>
+	    <li class="active">Tổng đàn bò nhập</li>
+	  </ol>
+	</section>
+	<!-- Main content -->
+	<section class="content">
+		<div class="row">
+			@if(Session::has('error'))
+			<!-- Message Feedback -->
+			<div class="col-md-12">
+				<div class="callout callout-danger">
+	              <h4>Lỗi</h4>
+	              <p>{{Session::get('error')}}.</p>
+	            </div>
+            </div>
+			@elseif(Session::has('success'))
+			<!-- Message Feedback -->
+			<div class="col-md-12">
+				<div class="callout callout-success">
+	              <h4>{{Session::get('success')}}</h4>
+	              <p>{{Session::get('success')}}.</p>
+	            </div>
+	         </div>
+			@endif	
+			<div class="col-md-12">
+				<!-- list cow import box -->
+				<div class="box" >
+					<div class="box-header">
+						<h3 class="box-title">Số lượng bò đã nhập thực tế giữa các đối tác</h3>										
+					</div><!--./box-header -->
+					<div class="box-body table-responsive">			
+						<table id="import-quantity-table" class="table table-bordered table-striped table-hover">
+							<thead>
+								<tr >			                        
+			                        <th>Đối tác</th>				                        
+			                        <th>Tổng</th>	    
+			                        <th>Số HĐ đã ký</th>                    
+			                        <th>Bò đực vỗ béo</th>
+			                        <th>Bò cái vỗ béo</th>
+			                        <th>Bò đực giống</th>
+			                        <th>Bò cái giống</th>
+			                        <th>Ngày cập nhật</th>			                        
+		                      </tr>
+							</thead>
+							<tbody>
+								@if(!empty($data['partners']))
+									@foreach($data['partners'] as $partner)
+									<tr id = "{{$partner['id']}}">
+										<td>{{$partner['name']}}</td>
+										<td class="total-column">{{number_format($partner['sumQty'],0,',','.')}}</td>
+										<td>{{$partner['import_counts']}}</td>
+										<td>{{number_format($partner['feederSteerQty'],0,',','.')}}</td>
+										<td>{{number_format($partner['feederheiferQty'],0,',','.')}}</td>
+										<td>{{number_format($partner['breederBullQty'],0,',','.')}}</td>
+										<td>{{number_format($partner['breederheiferQty'],0,',','.')}}</td>
+										<td>{{date('d/m/Y',strtotime($partner['updated_at']))}}</td>
+									</tr>
+									@endforeach
+								@endif
+							</tbody>
+						</table>
+					</div><!--./box-body -->
+				</div><!--./box -->
+			</div>
+			<div class="col-md-12">
+				<!-- list cow import box -->
+				<div class="box" >
+					<div class="box-header">
+						<h3 class="box-title">Đơn giá bình quân nhập bò (USD\Kg) giữa các đối tác</h3>										
+					</div><!--./box-header -->
+					<div class="box-body table-responsive">			
+						<table id="import-prices-table" class="table table-bordered table-striped table-hover">
+							<thead>
+								<tr >			                        
+			                        <th>Đối tác</th>				                        			                  
+			                        <th>Bò đực thịt</th>
+			                        <th>Bò cái thịt</th>
+			                        <th>Bò đực giống</th>
+			                        <th>Bò cái giống</th>
+			                        <th>Ngày cập nhật</th>			                        
+		                      </tr>
+							</thead>
+							<tbody>
+								@if(!empty($data['partners']))
+									@foreach($data['partners'] as $partner)
+									<tr id = "{{$partner['id']}}">
+										<td>{{$partner['name']}}</td>			
+										<td>{{number_format($partner['avg_price']['feederSteerPrice'],2,'.',',') . ' $/Kg'}}</td>
+										<td>{{number_format($partner['avg_price']['feederHeiferPrice'],2,'.',','). ' $/Kg'}}</td>
+										<td>{{number_format($partner['avg_price']['breederBullPrice'],2,'.',','). ' $/Kg'}}</td>
+										<td>{{number_format($partner['avg_price']['breederHeiferPrice'],2,'.',',').' $/Kg'}}</td>
+										<td>{{date('d/m/Y',strtotime($partner['updated_at']))}}</td>
+									</tr>
+									@endforeach
+								@endif
+							</tbody>
+						</table>
+					</div><!--./box-body -->
+				</div><!--./box -->
+			</div>
+			<div class="col-md-12">
+				<!-- list cow import box -->
+				<div class="box" >
+					<div class="box-header">
+						<h3 class="box-title">Bảng kế hoạch nhập khẩu bò</h3>										
+					</div><!--./box-header -->
+					<div class="box-body table-responsive">			
+						<table id="import-planning-table" class="table table-bordered table-striped table-hover">
+							<thead>
+								<tr >			
+									<th>Hợp đồng</th>                        
+			                        <th>Đối tác</th>				                        			                  
+			                        <th>Số lượng</th>
+			                        <th>Khối lượng</th>
+			                        <th>Giá trị</th>
+			                        <th>Ngày cập cảng</th>
+			                        <th>Thời hạn LC</th>
+			                        <th>Tình trạng LC</th>
+			                        <th>Ngày cập nhật</th>			                        
+		                      </tr>
+							</thead>
+							<tbody>
+								@if(!empty($data['contracts']))
+									@foreach($data['contracts'] as $contract)
+									<tr id = "{{$partner['id']}}">
+										<td>{{$contract->name}}</td>
+										<td>{{$data['partners'][$contract->partner_id]['name']}}</td>
+										<td>{{number_format($contract['sumQty'],0,'.',',')}}</td>
+										<td>{{number_format($contract['sumWeight'],0,'.',',')}} Kg</td>
+										<td>{{number_format($contract['sumPrice'],2,'.',',')}} $</td>
+										<td>{{date('d/m/Y',strtotime($contract['import_date']))}}</td>
+										<td>{{date('d/m/Y',strtotime($contract['lc_open_last_date']))}}</td>
+										<td>{{$contract->imp_status_text}}</td>
+										<td>{{date('d/m/Y',strtotime($partner['updated_at']))}}</td>
+									</tr>
+									@endforeach
+								@endif
+							</tbody>
+						</table>
+					</div><!--./box-body -->
+				</div><!--./box -->
+			</div><!-- Planning Contract Import -->
+			<div class = "col-md-12">
+				<!-- AREA CHART 1-->
+	            <div class="box box-primary">
+	                <div class="box-header">
+	                  <h3 class="box-title">Biểu đồ so sánh tỷ lệ tổng đàn bò nhập giữa các đối tác</h3>
+	                </div>
+	                <div class="box-body chart-responsive">
+	                  <div class="chart" id="pie-total-quantity" style="height:300px;"></div>
+	                </div><!-- /.box-body -->
+	            </div><!-- /.box -->
+			</div>
+			<div class = "col-md-12">
+				<!-- AREA CHART 1-->
+	            <div class="box box-primary">
+	                <div class="box-header">
+	                  <h3 class="box-title">Biểu đồ so sánh đơn giá bình quân USD/Kg giữa các đối tác</h3>
+	                </div>
+	                <div class="box-body chart-responsive">
+	                  <div class="chart" id="column-avg-price" style="height:300px;"></div>
+	                </div><!-- /.box-body -->
+	            </div><!-- /.box -->
+			</div>	
+			<div class = "col-md-12">
+				<!-- AREA CHART 1-->
+	            <div class="box box-primary">
+	                <div class="box-header">
+	                  <h3 class="box-title">Tiến độ các hợp đồng chờ nhập bò</h3>
+	                </div>
+	                <div class="box-body chart-responsive">
+	                  <div class="chart" id="timeline-import-planning" style="height:300px;"></div>
+	                </div><!-- /.box-body -->
+	            </div><!-- /.box -->
+			</div>	
+		</div>
+
+	</section>
+</div>
+@stop
+@section('data_code')
+	<!-- parsley -->
+    {{HTML::script("public/plugins/parsley/parsley.min.js")}}
+    <!-- Ngon ngu viet cho parsley-->
+    {{HTML::script("public/plugins/parsley/i18n/vi.js")}}
+    <!--Load script google chart -->
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+
+	<script type="text/javascript">
+		Array.prototype.reduce = undefined;
+		/* ------------------ */	
+		// Script cho datatable
+		$("document").ready(function(){
+			var myTable = $('#quantity-table , #prices-table , #import-planning-table');
+			myTable.dataTable({
+	          "bPaginate": false,
+	          "bLengthChange": true,
+	          "bFilter": false,
+	          "bSort": false,
+	          "bInfo": false,
+	          "bAutoWidth": true
+	        });
+	        $('#import-quantity-table tbody tr').on("click",function(event){
+	        	id = this.id;
+	        	console.log(this);
+	        	url = "{{URL::route('front_report_livestock_import_quantity_get')}}";
+	        	url += "/" + id;
+     			$(location).attr("href", url);
+	        });
+		})
+
+		/*Xu ly tao bieu do bang google chart */
+		// Bieu do pie ty le so bo thuc te giua cac quoc gia
+		google.load("visualization", "1", {packages:["corechart","timeline"],'language': 'vi'});
+		google.setOnLoadCallback(sumQuantityPartnerPieChart);
+		// Bieu do column ty mat do chi tiet cac loai bo giua cac quoc gia
+		//google.load("visualization", "1", {packages:["corechart","bar"]});
+		//google.setOnLoadCallback(avgPricePartnerLineChart);
+		// Bieu do time line ke hoach nhap bo 
+		//google.load("visualization", "1", {packages:["timeline"],'language': 'vn'});
+		google.setOnLoadCallback(importPlaningTimeChart);
+		// Ham xu ly de chart responsive
+		$(window).resize(function () {
+    		/*sumQuantityCountryPieChart();
+    		detailCountryColumnChart();*/
+		});
+
+		function sumQuantityPartnerPieChart(){
+			var optionsSumQuantity = {
+	        	width: '100%',
+	      		height: '100%',
+	            pieSliceText: 'percentage',  
+	            chartArea: {
+		            left: "3%",
+		            top: "3%",
+		            height: "94%",
+		            width: "94%"
+	        	}
+    		};
+    		var optionsAvgPrices = {
+		        legend: {position: 'top'}
+			};
+
+			var divToShowAvgPrices = $('#column-avg-price');
+    		var divToShowSumQuantity = $('#pie-total-quantity');
+
+    		var partners = {{json_encode($data['partners'])}};
+    		if(!jQuery.isEmptyObject(partners)){
+    			var dataSumQuantity = new google.visualization.DataTable();
+	    		dataSumQuantity.addColumn('string','PartnerName');
+	    		dataSumQuantity.addColumn('number','sumQuantity');
+
+	    		var dataAvgPrices = new google.visualization.DataTable();
+	    		dataAvgPrices.addColumn('string', 'Loại bò');
+	    		var avgPriceFeederSteer = new Array("Bò thịt đực");
+	      		var avgPriceFeederHeifer = new Array("Bò thịt cái");
+	      		var avgPriceBreederBull = new Array("Bò đực giống");
+	      		var avgPriceBreederHeifer = new Array("Bò cái giống");
+				
+				$.each(partners,function(key,partner){	
+					dataSumQuantity.addRows([
+	    				[partner.name,{v:partner.sumQty,f:numberWithCommans(partner.sumQty)}],
+	    			]);		
+					//
+					dataAvgPrices.addColumn('number',partner['name']);
+	      			avgPriceFeederSteer.push(partner['avg_price'].feederSteerPrice);
+	      			avgPriceFeederHeifer.push(partner['avg_price'].feederHeiferPrice);
+	      			avgPriceBreederBull.push(partner['avg_price'].breederBullPrice);
+	      			avgPriceBreederHeifer.push(partner['avg_price'].breederHeiferPrice);
+				});
+
+				dataAvgPrices.addRow(avgPriceFeederSteer);
+	      		dataAvgPrices.addRow(avgPriceFeederHeifer);
+	      		dataAvgPrices.addRow(avgPriceBreederBull);
+	     		dataAvgPrices.addRow(avgPriceBreederHeifer);
+	    		
+	    		var chartSumQuantity = new google.visualization.PieChart(document.getElementById('pie-total-quantity'));
+	    		chartSumQuantity.draw(dataSumQuantity,optionsSumQuantity);
+
+	    		var chartAvgprices = new google.visualization.LineChart(document.getElementById('column-avg-price'));
+				chartAvgprices.draw(dataAvgPrices, optionsAvgPrices);
+
+    		}else{
+    			ShowNoDataToDrawnChartMessages(divToShowSumQuantity);
+    		}
+    		
+		}
+		function avgPricePartnerColumnChart(){
+			var options = {
+					isStacked : true,
+					width: '100%',
+					height: '100%',
+					legend: {position: 'top', maxLines: 3},
+					hAxis : {
+						title: 'Quốc gia',
+						format : 'long',
+						viewWindowMode : 'pretty',
+						viewWindow: {
+				            min: [7, 30, 0],
+				            max: [17, 30, 0]
+				        }
+					},
+					vAxis: {
+	          			title: 'Số lượng'
+	        		}
+			};
+			var partners = {{json_encode($data['partners'])}}
+			var data = new google.visualization.DataTable();
+			data.addColumn('string',"Đối tác");
+			data.addColumn('number',"Bò thịt đực");
+			data.addColumn('number',"Bò thịt cái");
+			data.addColumn('number',"Bò giống đực");
+			data.addColumn('number',"Bò giống cái");
+			$.each(partners,function(key,partner){			
+			
+				data.addRows([
+					[
+						partner.name,
+						{v:partner['avg_price'].feederSteerPrice},
+						{v:partner['avg_price'].feederheiferPrice},
+						{v:partner['avg_price'].breederBullPrice},
+						{v:partner['avg_price'].breederheiferPrice}
+					],
+				]);
+			});
+			var chart = new google.visualization.ColumnChart(document.getElementById('column-avg-price'));
+			chart.draw(data, options);
+			
+		}
+
+		function avgPricePartnerLineChart(){
+			var options = {
+		        chart: {
+		          title: 'Box Office Earnings in First Two Weeks of Opening',
+		          subtitle: 'in millions of dollars (USD)'
+		        },
+		     
+		    };
+			var partners = {{json_encode($data['partners'])}}		
+			var data = new google.visualization.DataTable();
+			data.addColumn('string', 'Loại bò');
+		     
+
+	      	var avgPriceFeederSteer = new Array("Bò thịt đực");
+	      	var avgPriceFeederHeifer = new Array("Bò thịt cái");
+	      	var avgPriceBreederBull = new Array("Bò đực giống");
+	      	var avgPriceBreederHeifer = new Array("Bò cái giống");
+	      	$.each(partners,function(key,partner){
+	      		data.addColumn('number',partner['name']);
+	      		avgPriceFeederSteer.push(partner['avg_price'].feederSteerPrice);
+	      		avgPriceFeederHeifer.push(partner['avg_price'].feederHeiferPrice);
+	      		avgPriceBreederBull.push(partner['avg_price'].breederBullPrice);
+	      		avgPriceBreederHeifer.push(partner['avg_price'].breederHeiferPrice);
+	     	 })
+	      	
+	      	data.addRow(avgPriceFeederSteer);
+	      	data.addRow(avgPriceFeederHeifer);
+	      	data.addRow(avgPriceBreederBull);
+	     	data.addRow(avgPriceBreederHeifer);
+
+			var chart = new google.visualization.LineChart(document.getElementById('column-avg-price'));
+			chart.draw(data, options);
+		}
+
+		function importPlaningTimeChart(){
+			var dataTable = new google.visualization.DataTable();
+			dataTable.addColumn({ type: 'string', id: 'name' });
+			dataTable.addColumn({ type: 'string', id: 'status' });
+      	 	dataTable.addColumn({ type: 'date', id: 'lc' });
+       		dataTable.addColumn({ type: 'date', id: 'import' });
+       		var divToDrawn = $('#timeline-import-planning');
+       		var contracts = {{json_encode($data['contracts'])}}
+       		if(!jQuery.isEmptyObject(contracts)){
+       			$.each(contracts, function(key,contract){
+	       			dataTable.addRow([
+	       				contract.name,       				
+	       				contract.imp_status_text,       			
+	       				new Date(contract.lc_open_last_date),
+	       				new Date(contract.import_date)
+	       			]);
+       			});
+		   		var options = {
+				    timeline: { showRowLabels: true }
+				};
+       			var chart = new google.visualization.Timeline(document.getElementById('timeline-import-planning'));
+				chart.draw(dataTable,options);
+       		}else{
+       			ShowNoDataToDrawnChartMessages(divToDrawn);
+       		}   		
+		}
+	</script>
+@stop

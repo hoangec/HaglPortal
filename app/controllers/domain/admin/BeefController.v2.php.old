@@ -1,0 +1,326 @@
+<?php namespace Controllers\Domain\Admin;
+use \Farm as Farm;
+use \Company as Company;
+use \National as National;
+use \CowImport as CowImport;
+Class BeefController extends \BaseController{
+
+	public function getIndex(){
+		return \View::make('dashboard.admin.reports.beefbreeding.index')->with('title',"Quản lý báo cáo bò thịt");
+	}
+
+	public function getImportQuantity(){
+		$mFarms = Farm::lists('name','id');
+		$importTable = CowImport::all();
+		return \View::make('dashboard.admin.reports.beefbreeding.importquantity')
+						->with('title',"Quản lý nhập bò")
+						->with('farms',$mFarms)
+						->with('importTable',$importTable);
+	}
+	/* -- ---------------------------------------------------------------------------*/
+	/* Ham xu ly them, sua, xoa moi lo bo nhap 												*/
+	/*  -------------------------------------------------------------------------------*/
+	public function postImportQuantityAdd(){
+		//1. Lay gia tri duoc truyen
+
+		$val = \Validator::make(\Input::all(),CowImport::$cowImportRule);
+		if($val->passes()){
+			// Du lieu de tao lo nhap bo
+			$feederSteer = \Input::get('feedersteer_quantity');
+			$feederHeifer = \Input::get('feederheifer_quantity');
+			$breederBull = \Input::get('breederbull_quantity');
+			$breederHeifer = \Input::get('breederheifer_quantity');
+			$farmID = \Input::get('selected_farm');
+			// dinh dang lai ngay theo chuan mysql yyy-mm-dd
+			$importDate = date("Y-m-d",strtotime(\Input::get('import_date')));
+			//
+			$cowImportInsert = array(
+				'import_date'			=> $importDate,
+				'feedersteer'		=> $feederSteer,
+				'feederheifer'		=> $feederHeifer,
+				'breederbull'		=> $breederBull,
+				'breederheifer'		=> $breederHeifer,
+				'batch_name'			=> \Input::get('batch_name'),
+				'import_partner'		=> \Input::get('import_partner'),
+				'userID'				=> \Sentry::getUser()->id,
+				'farmID'				=>  $farmID
+			);			
+			CowImport::create($cowImportInsert);
+			/*$this->updateImportQuantity($farmID,$cowImportInsert);
+			$this->updateRealQuantity($farmID);*/
+			/*-- Return ve trang report_importbeef_get */
+			//return \Redirect::route('admin_report_import_quantity_get')->with('success',"Thêm thành công lô bò nhập");
+			$result = $this->updateQuantity("import",$cowImportInsert);
+			if($result){
+				return \Redirect::route('admin_report_import_quantity_get')->with('success',"Thêm thành công lô bò nhập");
+			}else{
+				return \Redirect::route('admin_report_import_quantity_get')->with('error',"Lỗi hệ thống, vui lòng liên hệ quản trị");
+			}
+		}else{
+			return "fail";
+		}
+	}
+
+	public function postImportQuantityUpdate(){
+		$val = \Validator::make(\Input::all(),CowImport::$cowImportRule);
+		if($val->passes()){
+			$feederSteer = \Input::get('feedersteer_quantity');
+			$feederHeifer = \Input::get('feederheifer_quantity');
+			$breederBull = \Input::get('breederbull_quantity');
+			$breederHeifer = \Input::get('breederheifer_quantity');
+			//
+			$feederSteerHide = \Input::get('feedersteer_quantity_hide');
+			$feederHeiferHide = \Input::get('feederheifer_quantity_hide');
+			$breederBullHide = \Input::get('breederbull_quantity_hide');
+			$breederHeiferHide = \Input::get('breederheifer_quantity_hide');
+			//
+			$diffFeederSteer = $feederSteer - $feederSteerHide;
+			$diffFeederHeifer = $feederHeifer - $feederHeiferHide;
+			$diffBreederBull = $breederBull - $breederBullHide;
+			$diffBreederHeifer = $breederHeifer - $breederHeiferHide;
+			//
+			$farmID = \Input::get('selected_farm');
+			$importDate = date("Y-m-d",strtotime(\Input::get('import_date')));
+			//
+			$cowImportUpdated = array(
+				'import_date'		=> $importDate,
+				'feedersteer'		=> $feederSteer,
+				'feederheifer'		=> $feederHeifer,
+				'breederbull'		=> $breederBull,
+				'breederheifer'		=> $breederHeifer,
+				'batch_name'			=> \Input::get('batch_name'),
+				'import_partner'		=> \Input::get('import_partner'),
+				'userID'				=> \Sentry::getUser()->id,
+				'farmID'				=>  $farmID
+			);
+			$data = array(
+				'feedersteer'		=> $diffFeederSteer,
+				'feederheifer'		=> $diffFeederHeifer,
+				'breederbull'		=> $diffBreederBull,
+				'breederheifer'		=> $diffBreederHeifer,
+				'farmID'				=>  $farmID
+			);
+			
+			$test = $this->updateQuantity('import',$data);		
+			echo "<pre>";
+			print_r($test);
+			echo "</pre>";
+		}else{
+			return "fail";
+		}
+	}
+
+	public function getImportQuantityDelete($id){
+		$import = CowImport::find($id);
+		$data = array(
+			'feedersteer'		=> 0 - $import->feedersteer,
+			'feederheifer'		=> 0 - $import->feederheifer,
+			'breederbull'		=> 0 - $import->breederbull,
+			'breederheifer'		=> 0 - $import->breederheifer,
+			'farmID'			=>  $import->farmID
+		);
+		if($import){
+			$import->delete();
+			$updateResult = $this->updateQuantity("import",$data);;
+			return \Response::json($updateResult);
+		}else{
+		  	return \Response::json(array("status"=>"error","mess"=>"Lô nhập không tồn tại"));
+		}
+	}
+
+	private function updateQuantity($type,$data){
+		if($type == 'import'){
+			 $resultAction = $this->updateImportQuantity($data);	
+		}
+		$resultReal = $this->updateRealQuantity($data['farmID']);
+		if($resultAction == true && $resultReal == true){
+			return true;
+		}else{
+			return false;
+		}
+	}
+
+	private function updateImportQuantity($data){
+		$result = array();
+		$mFarm = Farm::find($data['farmID']);
+		$currentFarmQty = json_decode($mFarm->import_quantity,true);
+		foreach($currentFarmQty as $key => $value){
+			$currentFarmQty[$key] += $data[$key];
+		}
+		//
+		$mCompany = Company::find($mFarm->companyID);
+		$currentCompanyQty = json_decode($mCompany->import_quantity,true);
+		foreach($currentCompanyQty as $key => $value){
+			$currentCompanyQty[$key] += $data[$key];
+		}
+		//
+		$mCountry = National::find($mCompany->nationalID);
+		$currentCountryQty = json_decode($mCountry->import_quantity,true);
+		foreach($currentCountryQty as $key => $value){
+			$currentCountryQty[$key] += $data[$key];
+		}
+		 
+		$result['farm']= $currentFarmQty;
+		$result['company'] = $currentCompanyQty;
+		$result['country'] = $currentCountryQty;	
+		try{			
+			$mFarm->update(array('import_quantity'=>json_encode($result['farm'])));
+			$mCompany->update(array('import_quantity'=>json_encode($result['company'])));
+			$mCountry->update(array('import_quantity'=>json_encode($result['country'])));
+			return true;
+		}catch(exp $e){
+			return false;
+		}
+		
+	}
+
+	/* -- ---------------------------------------------------------------------------*/
+	/* Ham xu ly cap nhap so luong nhap tuong ung voi cap farm,comapany,national*/
+	/*  -------------------------------------------------------------------------------*/
+	private function updateImportQuantityOld($farmID,$data){
+		$mFarm = Farm::find($farmID);
+		$farmImportQty = $this->updateFarmImpQty($mFarm);	
+		//
+		$mCompany  = Company::find($mFarm->companyID);
+		$companyImportQty = $this->updateCompanyImpQty($mCompany);
+		//
+		$mNational = National::find($mCompany->nationalID);
+		$nationalImportqty = $this->updateNationalImpQty($mNational);
+		//
+		$mFarm->update(array('import_quantity'=>json_encode($farmImportQty)));
+		$mCompany->update(array('import_quantity'=>json_encode($companyImportQty)));
+		$mNational->update(array('import_quantity'=>json_encode($nationalImportqty)));
+		//
+
+	}
+
+	private function updateFarmImpQty($farm){
+		/* Cap nhap import_quantity cua farm  */
+			// Tinh so luong tong tren farm tu CowImport		
+		$sumFeederSteerQty = CowImport::where("farmID",$farm->id)->get()->sum('malebeef_quantity');
+		$sumFeederheifer = CowImport::where("farmID",$farm->id)->get()->sum('femalebeef_quantity');
+		$sumBreederBull = CowImport::where("farmID",$farm->id)->get()->sum('steer_quantity');
+		$sumBreederheifer = CowImport::where("farmID",$farm->id)->get()->sum('heifer_quantity');
+		$farmImportQty = array(
+			'qtyMaleBeef'	=> $sumFeederSteerQty,
+			'qtyFemaleBeef' => $sumFeederheifer,
+			'qtySteer'		=> $sumBreederBull,
+			'qtyHeifer'		=> $sumBreederheifer
+		);
+		return $farmImportQty;
+	}
+	private function updateCompanyImpQty($company){
+		/* Cap nhap import_quantity cua Company tuong ung Farm */
+			// lay mang cac farm thuoc ID
+		$farmPerCompany = $company->farms()->get();
+			// Tinh so luong tong cac farm tuong ung company 
+		$sumComMaleBeefQty = 0;
+		$sumComFeMaleBeefQty = 0;
+		$sumComSteerQty = 0;
+		$sumComHeiferQty = 0;
+		foreach($farmPerCompany as $farm){
+			$sumComMaleBeefQty  += $this->updateFarmImpQty($farm)['qtyMaleBeef'];
+			$sumComFeMaleBeefQty  += $this->updateFarmImpQty($farm)['qtyFemaleBeef'];
+			$sumComSteerQty  += $this->updateFarmImpQty($farm)['qtySteer'];
+			$sumComHeiferQty  += $this->updateFarmImpQty($farm)['qtyHeifer'];
+		}
+		$companyImportQty = array(
+			'qtyMaleBeef'	=> $sumComMaleBeefQty,
+			'qtyFemaleBeef' => $sumComFeMaleBeefQty,
+			'qtySteer'		=> $sumComSteerQty,
+			'qtyHeifer'		=> $sumComHeiferQty
+		);
+		return $companyImportQty;
+	}
+
+	private function updateNationalImpQty($national){
+		/* Cap nhap import_quantity cua National tuong ung Company */
+			// lay mang cac farm thuoc National 
+		$companyPerNational = $national->companies()->get();
+		$sumNatiMaleBeefQty = 0;
+		$sumNatiFeMaleBeefQty = 0;
+		$sumNatiSteerQty = 0;
+		$sumNatiHeiferQty = 0;
+		foreach($companyPerNational as $company){
+			$sumNatiMaleBeefQty +=  $this->updateCompanyImpQty($company)['qtyMaleBeef'];
+			$sumNatiFeMaleBeefQty += $this->updateCompanyImpQty($company)['qtyFemaleBeef'];
+			$sumNatiSteerQty += $this->updateCompanyImpQty($company)['qtySteer'];
+			$sumNatiHeiferQty += $this->updateCompanyImpQty($company)['qtyHeifer'];
+		}
+		
+		$nationalImportqty = array(
+			'qtyMaleBeef'	=> $sumNatiMaleBeefQty,
+			'qtyFemaleBeef' => $sumNatiFeMaleBeefQty,
+			'qtySteer'		=> $sumNatiSteerQty,
+			'qtyHeifer'		=> $sumNatiHeiferQty
+		);
+		return $nationalImportqty;
+
+	}
+
+	/* -- ---------------------------------------------------------------------------*/
+	/* Ham xu ly cap nhap so luong thuc te tuong ung voi cap farm,comapany,national*/
+	/*  -------------------------------------------------------------------------------*/
+	private function updateRealQuantity($farmID){
+
+		$mFarm = Farm::find($farmID);
+		$farmRealQty = $this->updateFarmRealQty($mFarm);
+		//
+		$mCompany  = Company::find($mFarm->companyID);
+		$companyRealQty = $this->updateCompanyRealQty($mCompany);
+		//
+		$mNational = National::find($mCompany->nationalID);
+		$nationalRealQty = $this->updateNationalRealQty($mNational);
+		//
+		try{
+			$mFarm->update(array('real_quantity'=>json_encode($farmRealQty)));
+			$mCompany->update(array('real_quantity'=>json_encode($companyRealQty)));
+			$mNational->update(array('real_quantity'=>json_encode($nationalRealQty)));
+			return true;
+		}catch(exp $e){
+			return false;
+		}
+		
+	}
+	private function updateFarmRealQty($farm){
+
+		$importQty = json_decode($farm->import_quantity,true);
+		$exportQty = json_decode($farm->export_quantity,true);
+		$deathQty = json_decode($farm->death_quantity,true);
+		/*$realQty['qtyMaleBeef'] = $importQty['qtyMaleBeef'] - $exportQty['qtyMaleBeef'] - $deathQty['qtyMaleBeef'];
+		$realQty['qtyFemaleBeef'] = $importQty['qtyFemaleBeef'] - $exportQty['qtyFemaleBeef'] - $deathQty['qtyFemaleBeef'];
+		$realQty['qtySteer'] = $importQty['qtySteer'] - $exportQty['qtySteer'] - $deathQty['qtySteer'];
+		$realQty['qtyHeifer'] = $importQty['qtyHeifer'] - $exportQty['qtyHeifer'] - $deathQty['qtyHeifer'];	*/
+
+		$realQty['feedersteer'] = $importQty['feedersteer'] - $exportQty['feedersteer'] - $deathQty['feedersteer'];
+		$realQty['feederheifer'] = $importQty['feederheifer'] - $exportQty['feederheifer'] - $deathQty['feederheifer'];
+		$realQty['breederbull'] = $importQty['breederbull'] - $exportQty['breederbull'] - $deathQty['breederbull'];
+		$realQty['breederheifer'] = $importQty['breederheifer'] - $exportQty['breederheifer'] - $deathQty['breederheifer'];	
+		return $realQty;
+	}
+	private function updateCompanyRealQty($company){
+
+		$importQty = json_decode($company->import_quantity,true);
+		$exportQty = json_decode($company->export_quantity,true);
+		$deathQty = json_decode($company->death_quantity,true);
+		$realQty['feedersteer'] = $importQty['feedersteer'] - $exportQty['feedersteer'] - $deathQty['feedersteer'];
+		$realQty['feederheifer'] = $importQty['feederheifer'] - $exportQty['feederheifer'] - $deathQty['feederheifer'];
+		$realQty['breederbull'] = $importQty['breederbull'] - $exportQty['breederbull'] - $deathQty['breederbull'];
+		$realQty['breederheifer'] = $importQty['breederheifer'] - $exportQty['breederheifer'] - $deathQty['breederheifer'];	
+		return $realQty;
+	}
+
+	private function updateNationalRealQty($national){
+
+		$importQty = json_decode($national->import_quantity,true);
+		$exportQty = json_decode($national->export_quantity,true);
+		$deathQty = json_decode($national->death_quantity,true);
+		$realQty['feedersteer'] = $importQty['feedersteer'] - $exportQty['feedersteer'] - $deathQty['feedersteer'];
+		$realQty['feederheifer'] = $importQty['feederheifer'] - $exportQty['feederheifer'] - $deathQty['feederheifer'];
+		$realQty['breederbull'] = $importQty['breederbull'] - $exportQty['breederbull'] - $deathQty['breederbull'];
+		$realQty['breederheifer'] = $importQty['breederheifer'] - $exportQty['breederheifer'] - $deathQty['breederheifer'];	
+		return $realQty;
+	}
+
+
+}

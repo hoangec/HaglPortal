@@ -172,6 +172,17 @@
 	                </div><!-- /.box-body -->
 	            </div><!-- /.box -->
 			</div>
+			<div class = "col-md-12">
+				<!-- AREA CHART 1-->
+	            <div class="box box-primary">
+	                <div class="box-header">
+	                  <h3 class="box-title">Biểu đồ so sánh tỷ lệ tổng đàn bò nhập giữa các công ty</h3>
+	                </div>
+	                <div class="box-body chart-responsive">
+	                  <div class="chart" id="column-total-company-quantity" style="height:300px;"></div>
+	                </div><!-- /.box-body -->
+	            </div><!-- /.box -->
+			</div>
 			<div class = "col-md-6">
 				<!-- AREA CHART 1-->
 	            <div class="box box-primary">
@@ -248,12 +259,12 @@
 		// Bieu do pie ty le so bo thuc te giua cac quoc gia
 		google.load("visualization", "1", {packages:["corechart","timeline"],'language': 'vi'});
 		google.setOnLoadCallback(sumQuantityAndPricePartnerChart);
-		google.setOnLoadCallback(sumQuantityCompanyPieChart);
-		google.setOnLoadCallback(sumQuantityFeedlotPieChart);
+		google.setOnLoadCallback(sumQuantityCompanyColumnChart);
+		//google.setOnLoadCallback(sumQuantityFeedlotPieChart);
 		// Ham xu ly de chart responsive
 		$(window).resize(function () {
-    		sumQuantityAndPricePartnerChart();
-    		importPlaningTimeChart();
+    		//sumQuantityAndPricePartnerChart();
+    		//importPlaningTimeChart();
 		});
 
 		function sumQuantityAndPricePartnerChart(){
@@ -376,7 +387,44 @@
     			ShowNoDataToDrawnChartMessages(divToShowFeedlotQuantity);
     		}
 		}
+		function sumQuantityCompanyColumnChart(){
+			var optionsColumnChart = {
+					isStacked : true,
+					width: '100%',
+					height: '100%',
+					legend: {position: 'top', maxLines: 3},
+					hAxis : {
+						title: 'Công ty',
+						format : 'long',
+						viewWindowMode : 'pretty',
+						viewWindow: {
+				            min: [7, 30, 0],
+				            max: [17, 30, 0]
+				        }
+					},
+					vAxis: {
+	          			title: 'Số lượng'
+	        		}
+			};
+			var divToShowComapnyQuantity = 'column-total-company-quantity';
+			var companies = {{json_encode($data['companies'])}}
+			if(!jQuery.isEmptyObject(companies)){
+				var dataCompanyQuantity = new google.visualization.DataTable();
+	    		dataCompanyQuantity.addColumn('string','companyName');
+	    		dataCompanyQuantity.addColumn('number','Nhập nội bộ');
+	    		dataCompanyQuantity.addColumn('number','Nhập nhà xuất khẩu');
+	    		$.each(companies,function(key,company){
+	    			dataCompanyQuantity.addRows([
+	    				[company.name,{v:company.internal_received.sumQty,f:numberWithCommans(company.internal_received.sumQty)},{v:company.external_received.sumQty,f:numberWithCommans(company.external_received.sumQty)}],
+	    			]);	
+	    		});
+	    		var chartSumCompanyQuantity = new google.visualization.ColumnChart(document.getElementById(divToShowComapnyQuantity));
+	    		chartSumCompanyQuantity.draw(dataCompanyQuantity,optionsColumnChart)
+			}else{
+				ShowNoDataToDrawnChartMessages(divToShowComapnyQuantity);
+			}
 
+		}
 		function CompanyDetailFormat(value){
 			var jObject;
 			var dataJson = {{json_encode($data['feedlotsPerCompanies'])}}		

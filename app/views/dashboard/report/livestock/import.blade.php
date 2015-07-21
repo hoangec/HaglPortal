@@ -125,7 +125,7 @@
 				<!-- list cow import box -->
 				<div class="box" >
 					<div class="box-header">
-						<h3 class="box-title">Số lượng bò đã nhập theo từng khu vực (Nhập nội bộ / nhập nhà cung cấp)</h3>										
+						<h3 class="box-title">Số lượng bò đã nhập theo từng trang trại (Nhập nội bộ / nhập nhà cung cấp)</h3>										
 					</div><!--./box-header -->
 					<div class="box-body table-responsive">			
 						<table id="import-quantity-table" class="table table-bordered table-striped table-hover">
@@ -176,7 +176,7 @@
 				<!-- AREA CHART 1-->
 	            <div class="box box-primary">
 	                <div class="box-header">
-	                  <h3 class="box-title">Biểu đồ so sánh tỷ lệ tổng đàn bò nhập giữa các công ty</h3>
+	                  <h3 class="box-title">Biểu đồ so sánh tỷ lệ tổng đàn bò nhập từ giữa các công ty</h3>
 	                </div>
 	                <div class="box-body chart-responsive">
 	                  <div class="chart" id="column-total-company-quantity" style="height:300px;"></div>
@@ -198,7 +198,7 @@
 				<!-- AREA CHART 1-->
 	            <div class="box box-primary">
 	                <div class="box-header">
-	                  <h3 class="box-title">Biểu đồ so sánh tỷ lệ tổng đàn bò nhập giữa các công ty</h3>
+	                  <h3 class="box-title">Biểu đồ đàn bò nhập từ <b>nhà xuất khẩu</b> giữa các công ty</h3>
 	                </div>
 	                <div class="box-body chart-responsive">
 	                  <div class="chart" id="pie-total-company-quantity" style="height:300px;"></div>
@@ -209,7 +209,7 @@
 				<!-- AREA CHART 1-->
 	            <div class="box box-primary">
 	                <div class="box-header">
-	                  <h3 class="box-title">Biểu đồ so sánh tỷ lệ tổng đàn bò nhập giữa các khu vực</h3>
+	                  <h3 class="box-title">Biểu đồ đàn bò nhập từ <b>nhà xuất khẩu</b> giữa các trang trại</h3>
 	                </div>
 	                <div class="box-body chart-responsive">
 	                  <div class="chart" id="pie-total-feedlot-quantity" style="height:300px;"></div>
@@ -269,16 +269,18 @@
 		/*Xu ly tao bieu do bang google chart */
 		// Bieu do pie ty le so bo thuc te giua cac quoc gia
 		google.load("visualization", "1", {packages:["corechart","timeline"],'language': 'vi'});
-		google.setOnLoadCallback(sumQuantityAndPricePartnerChart);
+		google.setOnLoadCallback(sumQuantityExporterhart);
 		google.setOnLoadCallback(sumQuantityCompanyColumnChart);
 		google.setOnLoadCallback(sumQuantityFeedlotColumnChart);
+		google.setOnLoadCallback(sumQuantityCompanyPieChart);
+		google.setOnLoadCallback(sumQuantityFeedlotPieChart);	
 		// Ham xu ly de chart responsive
 		$(window).resize(function () {
     		//sumQuantityAndPricePartnerChart();
     		//importPlaningTimeChart();
 		});
 
-		function sumQuantityAndPricePartnerChart(){
+		function sumQuantityExporterhart(){
 			var optionsSumQuantity = {
 	        	width: '100%',
 	      		height: '100%',
@@ -290,54 +292,25 @@
 		            width: "94%"
 	        	}
     		};
-    		var optionsAvgPrices = {
-		        legend: {position: 'top'}
-			};
-
-			var divToShowAvgPrices = $('#column-avg-price');
     		var divToShowSumQuantity = $('#pie-total-quantity');
-
     		var exporters = {{json_encode($data['exporters'])}};
     		if(!jQuery.isEmptyObject(exporters)){
     			var dataSumQuantity = new google.visualization.DataTable();
 	    		dataSumQuantity.addColumn('string','ExporterName');
 	    		dataSumQuantity.addColumn('number','sumQuantity');
-
-	    	/*	var dataAvgPrices = new google.visualization.DataTable();
-	    		dataAvgPrices.addColumn('string', 'Loại bò');
-	    		var avgPriceFeederSteer = new Array("Bò thịt đực");
-	      		var avgPriceFeederHeifer = new Array("Bò thịt cái");
-	      		var avgPriceBreederBull = new Array("Bò đực giống");
-	      		var avgPriceBreederHeifer = new Array("Bò cái giống");*/
 				
 				$.each(exporters,function(key,exporter){	
 					dataSumQuantity.addRows([
 	    				[exporter.name,{v:exporter.sumQty,f:numberWithCommans(exporter.sumQty)}],
 	    			]);		
-					//
-				/*	dataAvgPrices.addColumn('number',exporter['name']);
-	      			avgPriceFeederSteer.push(exporter['avg_price'].feederSteerPrice);
-	      			avgPriceFeederHeifer.push(exporter['avg_price'].feederHeiferPrice);
-	      			avgPriceBreederBull.push(exporter['avg_price'].breederBullPrice);
-	      			avgPriceBreederHeifer.push(exporter['avg_price'].breederHeiferPrice);*/
 				});
-
-				/*dataAvgPrices.addRow(avgPriceFeederSteer);
-	      		dataAvgPrices.addRow(avgPriceFeederHeifer);
-	      		dataAvgPrices.addRow(avgPriceBreederBull);
-	     		dataAvgPrices.addRow(avgPriceBreederHeifer);*/
 	    		
 	    		var chartSumQuantity = new google.visualization.PieChart(document.getElementById('pie-total-quantity'));
 	    		chartSumQuantity.draw(dataSumQuantity,optionsSumQuantity);
 
-	    		//var chartAvgprices = new google.visualization.LineChart(document.getElementById('column-avg-price'));
-				//chartAvgprices.draw(dataAvgPrices, optionsAvgPrices);
-
     		}else{
     			ShowNoDataToDrawnChartMessages(divToShowSumQuantity);
-    			ShowNoDataToDrawnChartMessages(divToShowAvgPrices);
     		}
-    		
 		}
 		function sumQuantityCompanyPieChart(){
 			var optionsCompanySumQuantity = {
@@ -360,7 +333,7 @@
 	    		dataCompanyQuantity.addColumn('number','sumQuantity');
 	    		$.each(companies,function(key,company){
 	    			dataCompanyQuantity.addRows([
-	    				[company.name,{v:company.sumQty,f:numberWithCommans(company.sumQty)}],
+	    				[company.name,{v:company.external_received.sumQty,f:numberWithCommans(company.external_received.sumQty)}],
 	    			]);	
 	    		});
 	    		var chartSumCompanyQuantity = new google.visualization.PieChart(document.getElementById('pie-total-company-quantity'));
@@ -389,7 +362,7 @@
 	    		dataFeedlotQuantity.addColumn('number','sumQuantity');
 	    		$.each(feedlots,function(key,feedlot){
 	    			dataFeedlotQuantity.addRows([
-	    				[feedlot.name,{v:feedlot.sumQty,f:numberWithCommans(feedlot.sumQty)}],
+	    				[feedlot.name,{v:feedlot.external_received.sumQty,f:numberWithCommans(feedlot.external_received.sumQty)}],
 	    			]);	
 	    		});
 	    		var chartSumFeedlotQuantity = new google.visualization.PieChart(document.getElementById('pie-total-feedlot-quantity'));
@@ -434,7 +407,6 @@
 			}else{
 				ShowNoDataToDrawnChartMessages(divToShowComapnyQuantity);
 			}
-
 		}
 		function sumQuantityFeedlotColumnChart(){
 			var optionsColumnChart = {
@@ -472,7 +444,6 @@
 			}else{
 				ShowNoDataToDrawnChartMessages(divToShowFeedlotQuantity);
 			}
-
 		}
 		function CompanyDetailFormat(value){
 			var jObject;

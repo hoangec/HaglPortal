@@ -12,7 +12,7 @@
     <!-- {{HTML::style("public/plugins/ionicons/css/ionicons.min.css")}}  -->  
     <link href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel="stylesheet" type="text/css" />   
     <!-- Theme style -->
-    {{HTML::style("public/css/adminlte/AdminLTE.min.css")}}
+    {{HTML::style("public/css/adminlte/AdminLTE.css")}}
     <!-- AdminLTE Skins. Choose a skin from the css/skins 
          folder instead of downloading all of them to reduce the load. -->
     {{HTML::style("public/css/adminlte/skins/_all-skins.min.css")}}

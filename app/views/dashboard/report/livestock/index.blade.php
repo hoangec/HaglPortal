@@ -21,7 +21,7 @@
           <div class="small-box bg-aqua">
             <div class="inner">
               <h3>{{number_format($data['totalRealQtyCountries'],0,',','.')}}</h3>
-              <p>Tổng đàn bò thực tế</p>
+              <p>Đàn bò thực tế</p>
             </div>
             <div class="icon">
               <i class="ion-pie-graph"></i>
@@ -34,7 +34,7 @@
           <div class="small-box bg-yellow">
             <div class="inner">
               <h3>{{number_format($data['totalImportQtyCountries'],0,',','.')}}</h3>
-              <p>Bò nhập</p>
+              <p>Bò nhập nhà xuất khẩu</p>
             </div>
             <div class="icon">
               <i class="ion-arrow-down-a"></i>
@@ -47,7 +47,7 @@
           <div class="small-box bg-green">
             <div class="inner">
               <h3>{{number_format($data['totalExportQtyCountries'],0,',','.')}}</h3>
-              <p>Bò xuất</p>
+              <p>Bò xuất lò mỗ</p>
             </div>
             <div class="icon">
               <i class="ion-arrow-up-a"></i>
@@ -81,7 +81,7 @@
         <div class = "col-xs-6 col-md-6">
           <div class="box box-primary">
               <div class="box-header">
-                <h3 class="box-title">Số liệu từng khu vực</h3>
+                <h3 class="box-title">Số liệu từng trang trại</h3>
               </div>
               <div class="box-body chart-responsive" id="country_geo_table" style="height:600px;">              
                 </div>
@@ -121,8 +121,8 @@
             geoData.addColumn('number','Lon');
             geoData.addColumn('string','Khu vực');
             geoData.addColumn('number','Thực tế');
-            geoData.addColumn('number','Nhập');
-            geoData.addColumn('number','Xuất');
+            geoData.addColumn('number','Nhập nhà xuất khẩu');
+            geoData.addColumn('number','Xuất lò mỗ');
             geoData.addColumn('number','Chết');
             $.each(feedlots,function(key,feedlot){
               var realQtyJson = JSON.parse(feedlot.real_quantity);

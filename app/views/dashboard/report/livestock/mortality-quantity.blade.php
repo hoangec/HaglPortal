@@ -14,13 +14,13 @@
 	<!-- Content Header (Page header) -->
 	<section class="content-header">
 	  <h1>
-	    Báo cáo tổng đàn bò chết	
+	    Báo cáo bò thịt chết	
 	  </h1>
 	  <ol class="breadcrumb">
 	    <li><a href="#"><i class="fa fa-dashboard"></i>Home</a></li>
 	    <li><a href="#">Báo cáo ngành</a></li>
 	    <li><a href="{{URL::route('front_report_livestock_index_get')}}">Chăn nuôi bò thịt</a></li>
-	    <li class="active">Tổng đàn bò thực tế</li>
+	    <li class="active">Bò chết</li>
 	  </ol>
 	</section>
 	<!-- Main content -->

@@ -183,6 +183,17 @@
 	                </div><!-- /.box-body -->
 	            </div><!-- /.box -->
 			</div>
+			<div class = "col-md-12">
+				<!-- AREA CHART 1-->
+	            <div class="box box-primary">
+	                <div class="box-header">
+	                  <h3 class="box-title">Biểu đồ so sánh tỷ lệ tổng đàn bò nhập giữa các trang trại</h3>
+	                </div>
+	                <div class="box-body chart-responsive">
+	                  <div class="chart" id="column-total-feedlot-quantity" style="height:300px;"></div>
+	                </div><!-- /.box-body -->
+	            </div><!-- /.box -->
+			</div>
 			<div class = "col-md-6">
 				<!-- AREA CHART 1-->
 	            <div class="box box-primary">
@@ -260,7 +271,7 @@
 		google.load("visualization", "1", {packages:["corechart","timeline"],'language': 'vi'});
 		google.setOnLoadCallback(sumQuantityAndPricePartnerChart);
 		google.setOnLoadCallback(sumQuantityCompanyColumnChart);
-		//google.setOnLoadCallback(sumQuantityFeedlotPieChart);
+		google.setOnLoadCallback(sumQuantityFeedlotColumnChart);
 		// Ham xu ly de chart responsive
 		$(window).resize(function () {
     		//sumQuantityAndPricePartnerChart();
@@ -422,6 +433,44 @@
 	    		chartSumCompanyQuantity.draw(dataCompanyQuantity,optionsColumnChart)
 			}else{
 				ShowNoDataToDrawnChartMessages(divToShowComapnyQuantity);
+			}
+
+		}
+		function sumQuantityFeedlotColumnChart(){
+			var optionsColumnChart = {
+					isStacked : true,
+					width: '100%',
+					height: '100%',
+					legend: {position: 'top', maxLines: 3},
+					hAxis : {
+						title: 'Trang trại',
+						format : 'long',
+						viewWindowMode : 'pretty',
+						viewWindow: {
+				            min: [7, 30, 0],
+				            max: [17, 30, 0]
+				        }
+					},
+					vAxis: {
+	          			title: 'Số lượng'
+	        		}
+			};
+			var divToShowFeedlotQuantity = 'column-total-feedlot-quantity';
+			var feedlots = {{json_encode($data['feedlots'])}}
+			if(!jQuery.isEmptyObject(feedlots)){
+				var dataFeedlotQuantity = new google.visualization.DataTable();
+	    		dataFeedlotQuantity.addColumn('string','feedlotName');
+	    		dataFeedlotQuantity.addColumn('number','Nhập nội bộ');
+	    		dataFeedlotQuantity.addColumn('number','Nhập nhà xuất khẩu');
+	    		$.each(feedlots,function(key,feedlot){
+	    			dataFeedlotQuantity.addRows([
+	    				[feedlot.name,{v:feedlot.internal_received.sumQty,f:numberWithCommans(feedlot.internal_received.sumQty)},{v:feedlot.external_received.sumQty,f:numberWithCommans(feedlot.external_received.sumQty)}],
+	    			]);	
+	    		});
+	    		var chartSumFeedlotQuantity = new google.visualization.ColumnChart(document.getElementById(divToShowFeedlotQuantity));
+	    		chartSumFeedlotQuantity.draw(dataFeedlotQuantity,optionsColumnChart)
+			}else{
+				ShowNoDataToDrawnChartMessages(divToShowFeedlotQuantity);
 			}
 
 		}
